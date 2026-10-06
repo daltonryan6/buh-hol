@@ -28,7 +28,7 @@
         <div class="info-icon">📦</div>
         <div class="info-label">Scripts Repo</div>
         <div class="info-value"><a href="https://github.com/daltonryan6/buh-hol" target="_blank">GitHub</a></div>
-        <div class="info-detail">Clone or download the scripts/ folder</div>
+        <div class="info-detail">Connected via CoCo in Account Setup</div>
       </div>
     </div>
   </div>
@@ -52,15 +52,42 @@
           <li>Follow the instructions in the email to activate your account and set your password</li>
           <li>Log in to your new Snowflake trial account &mdash; you should land on the <strong>Snowsight</strong> home page</li>
         </ol>
-        <hr>
-        <h3>0.2 Download the Lab Scripts</h3>
-        <ol>
-          <li>Go to the <a href="https://github.com/daltonryan6/buh-hol" target="_blank">GitHub repo</a></li>
-          <li>Click <strong>Code &rarr; Download ZIP</strong> or clone the repo</li>
-          <li>You will need the files in the <code>scripts/</code> folder (00_setup.sql through 06_cleanup.sql)</li>
-        </ol>
         <div class="callout">
           <p><strong>Already have a Snowflake account?</strong> You can use an existing trial or paid account. Just make sure you can log in as <strong>ACCOUNTADMIN</strong> and have a warehouse available.</p>
+        </div>
+        <hr>
+        <h3>0.2 Open Cortex Code</h3>
+        <ol>
+          <li>Log in to Snowsight and look for the <strong>Cortex Code icon</strong> in the <strong>lower-right corner</strong></li>
+          <li>Click it &mdash; the CoCo chat panel opens on the right side</li>
+          <li>You should see a chat input box at the bottom</li>
+        </ol>
+        <div class="callout">
+          <p><strong>What is Cortex Code?</strong> CoCo is Snowflake's AI-powered development platform. You describe what you want in plain English and it writes and runs the SQL for you. Think of it as an AI pair programmer that understands Snowflake natively.</p>
+        </div>
+        <hr>
+        <h3>0.3 Connect to the Lab's GitHub Repository</h3>
+        <p>Instead of downloading files, you'll connect Snowflake directly to the public GitHub repository. Copy and paste this prompt into Cortex Code:</p>
+        <div class="code-block">
+          <div class="code-header"><span>CoCo Prompt &ndash; Connect GitHub repo</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
+          <pre>Please connect my Snowflake account to a public GitHub repository
+so I can use it as a file source during this lab.
+
+1. Create a database called BUH_HOL with schema INBOUND if it doesn't exist
+2. Create an API integration called github_buh_lab for GitHub HTTPS access,
+   allowing the prefix https://github.com/daltonryan6/
+3. Create a Git repository object called LAB_REPO in the
+   BUH_HOL.INBOUND schema pointing to:
+   https://github.com/daltonryan6/buh-hol
+4. Fetch the latest contents from the repository
+5. Confirm everything worked by listing the top-level files and folders
+   available in the main branch</pre>
+        </div>
+        <div class="callout">
+          <p><strong>What's happening:</strong> CoCo creates a live connection between your Snowflake account and the lab's GitHub repo. All scripts will be accessible directly from GitHub &ndash; no manual file handling needed.</p>
+        </div>
+        <div class="callout callout-warn">
+          <p><strong>Important:</strong> When CoCo asks for permission to run a SQL statement, click the <strong>Allow</strong> dropdown and select <strong>"Allow in this chat"</strong> so you won't be prompted again.</p>
         </div>
       </div>
       <div class="setup-text">
@@ -358,15 +385,38 @@
             <li><strong>Tags &amp; Governance</strong> &ndash; PII tagging, tag-based masking, role-based access</li>
           </ol>
 
-          <h3>Prerequisites</h3>
+          <h3>0.1 Create a Git Workspace</h3>
+          <p>Now that Snowflake is connected to GitHub (from Account Setup above), create a visual workspace to browse the repo files:</p>
           <ol>
-            <li><strong>Snowflake trial</strong> &ndash; <a href="https://signup.snowflake.com/" target="_blank">signup.snowflake.com</a> (Enterprise, any cloud/region)</li>
-            <li>Log in with <strong>ACCOUNTADMIN</strong></li>
-            <li>Clone the lab repo or download the <code>scripts/</code> folder</li>
+            <li>In the left sidebar, go to <strong>Projects &gt; Workspaces</strong></li>
+            <li>Click the <strong>+</strong> next to Databases and select <strong>Git workspace</strong></li>
+            <li>Paste <code>https://github.com/daltonryan6/buh-hol</code> as the <strong>Repository URL</strong></li>
+            <li>The <strong>Workspace Name</strong> will fill automatically once the URL is pasted</li>
+            <li>Select <code>github_buh_lab</code> as the API Integration</li>
+            <li>Choose <strong>Public repository</strong> for authentication</li>
+            <li>Click <strong>Create</strong></li>
           </ol>
+          <div class="callout callout-info">
+            <strong>Why this matters:</strong> Your Snowflake account now has a live connection to GitHub. You can pull the latest changes, browse files, and run SQL &ndash; all directly from Snowsight without switching tools.
+          </div>
 
-          <h3>Run the setup script</h3>
-          <p>Open <code>scripts/00_setup.sql</code> and run it end-to-end. It creates the BUH_HOL database with INBOUND, CURATED, GOLD, and GOVERNANCE schemas, plus five Epic Clarity source tables with synthetic clinical data.</p>
+          <h3>0.2 Run the Setup Script via CoCo</h3>
+          <p>Instead of copy-pasting SQL, ask CoCo to execute the setup script directly from the GitHub repo:</p>
+          <div class="code-block">
+            <div class="code-header"><span>CoCo Prompt &ndash; Execute setup script</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
+            <pre>Please execute the setup script from the GitHub repository we connected.
+Run this file to create the BUH_HOL database, warehouse, all tables,
+and load all sample data:
+
+@BUH_HOL.INBOUND.LAB_REPO/branches/main/scripts/00_setup.sql
+
+Use EXECUTE IMMEDIATE FROM to run it. After execution, show me a summary
+table of every table created in the INBOUND schema with its row count
+so I can confirm everything loaded correctly.</pre>
+          </div>
+          <div class="callout callout-info">
+            <strong>What's happening:</strong> CoCo pulls the setup script directly from GitHub and executes it. The script creates the BUH_HOL database with INBOUND, CURATED, GOLD, and GOVERNANCE schemas, plus five Epic Clarity source tables with synthetic clinical data.
+          </div>
 
           <div class="expected-output">
             <strong>Expected output (checkpoint query)</strong>
@@ -398,22 +448,22 @@
             <span class="badge badge-script">01_workspaces_and_git.sql</span>
           </div>
 
-          <p>Workspaces connect a Git repo directly to your Snowflake account. You can browse files, run SQL, and fetch updates &ndash; all from Snowsight. This lab itself is delivered via a Git workspace.</p>
+          <p>In Step 0, you used CoCo to connect a Git repo and execute the setup script directly from it. Now let's explore what Git workspaces give you and run the remaining workspace exercises.</p>
 
-          <h3>1.1 Connect the repo</h3>
-          <p>Run <code>01_workspaces_and_git.sql</code> Parts A&ndash;C. The instructor will walk through the API integration; everyone connects to the lab repo.</p>
-          <div class="code-block">
-            <div class="code-header"><span>SQL &ndash; Browse the repo</span><button class="copy-btn">📋 Copy</button></div>
-            <pre>ALTER GIT REPOSITORY BUH_HOL.INBOUND.LAB_REPO FETCH;
-SHOW GIT BRANCHES IN BUH_HOL.INBOUND.LAB_REPO;
-LS @BUH_HOL.INBOUND.LAB_REPO/branches/main/scripts/;</pre>
-          </div>
+          <h3>1.1 Browse the repo in Snowsight</h3>
+          <p>Go to your Git workspace in the left sidebar. You should see the repo files (<code>scripts/</code>, <code>README.md</code>, etc.) in the file explorer. Click into <code>scripts/</code> to browse the SQL files.</p>
 
-          <h3>1.2 Run setup FROM the repo</h3>
-          <p>Instead of copy-pasting SQL, execute it directly from the versioned repository:</p>
+          <h3>1.2 Run SQL directly from Git</h3>
+          <p>Ask CoCo to run the workspace-specific exercises:</p>
           <div class="code-block">
-            <div class="code-header"><span>SQL &ndash; Execute from Git</span><button class="copy-btn">📋 Copy</button></div>
-            <pre>EXECUTE IMMEDIATE FROM @BUH_HOL.INBOUND.LAB_REPO/branches/main/scripts/00_setup.sql;</pre>
+            <div class="code-header"><span>CoCo Prompt &ndash; Run workspace exercises</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
+            <pre>Please run the workspace and Git exercises from the lab repo:
+
+@BUH_HOL.INBOUND.LAB_REPO/branches/main/scripts/01_workspaces_and_git.sql
+
+Use EXECUTE IMMEDIATE FROM to run it. After execution, show me
+the results of the Git branch listing and file listing so I can
+confirm the workspace connection is working.</pre>
           </div>
 
           <h3>1.3 Before vs After</h3>
@@ -431,7 +481,7 @@ LS @BUH_HOL.INBOUND.LAB_REPO/branches/main/scripts/;</pre>
 
           <div class="checkpoint">
             <h4>Checkpoint</h4>
-            <p>You can browse the repo in Snowsight, see the scripts/ folder, and run SQL directly from Git.</p>
+            <p>You can browse the repo in Snowsight, see the scripts/ folder, and run SQL directly from Git via CoCo.</p>
           </div>
 
           <div class="step-nav">
