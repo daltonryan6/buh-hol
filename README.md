@@ -23,7 +23,7 @@ This lab covers the topics Louis's team at Brown University Health is evaluating
 
 1. Clone this repository or download the `scripts/` folder
 2. Open `scripts/00_setup.sql` and run it end-to-end
-3. Follow the guided website at [daltonryan6.github.io/buh-automation-hol](https://daltonryan6.github.io/buh-automation-hol/) or work through the numbered scripts in order
+3. Follow the guided website at [daltonryan6.github.io/buh-hol](https://daltonryan6.github.io/buh-hol/) or work through the numbered scripts in order
 
 ### Session flow (120 minutes)
 
@@ -40,7 +40,7 @@ This lab covers the topics Louis's team at Brown University Health is evaluating
 ### Repository structure
 
 ```
-buh-automation-hol/
+buh-hol/
   index.html                         -- Guided walkthrough website
   assets/
     styles.css                       -- Site styling

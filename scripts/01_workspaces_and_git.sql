@@ -46,7 +46,7 @@ USE ROLE ACCOUNTADMIN;
 -- Step 2: Create a Git repository object
 -- CREATE OR REPLACE GIT REPOSITORY BUH_HOL.RAW.LAB_REPO
 --   API_INTEGRATION = github_integration
---   ORIGIN = 'https://github.com/daltonryan6/buh-automation-hol.git';
+--   ORIGIN = 'https://github.com/daltonryan6/buh-hol.git';
 
 -- Step 3: Fetch latest from remote
 -- ALTER GIT REPOSITORY BUH_HOL.RAW.LAB_REPO FETCH;

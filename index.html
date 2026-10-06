@@ -22,12 +22,12 @@
       <div class="info-card">
         <div class="info-icon">🔗</div>
         <div class="info-label">This Guide</div>
-        <div class="info-value"><a href="https://daltonryan6.github.io/buh-automation-hol/" target="_blank">daltonryan6.github.io/buh-automation-hol</a></div>
+        <div class="info-value"><a href="https://daltonryan6.github.io/buh-hol/" target="_blank">daltonryan6.github.io/buh-hol</a></div>
       </div>
       <div class="info-card">
         <div class="info-icon">📦</div>
         <div class="info-label">Scripts Repo</div>
-        <div class="info-value"><a href="https://github.com/daltonryan6/buh-automation-hol" target="_blank">GitHub</a></div>
+        <div class="info-value"><a href="https://github.com/daltonryan6/buh-hol" target="_blank">GitHub</a></div>
         <div class="info-detail">Clone or download the scripts/ folder</div>
       </div>
     </div>
@@ -195,7 +195,7 @@ CREATE OR REPLACE API INTEGRATION github_integration
 -- Step 2: Git repository object
 CREATE OR REPLACE GIT REPOSITORY BUH_HOL.RAW.LAB_REPO
   API_INTEGRATION = github_integration
-  ORIGIN = 'https://github.com/daltonryan6/buh-automation-hol.git';
+  ORIGIN = 'https://github.com/daltonryan6/buh-hol.git';
 
 -- Step 3: Fetch and browse
 ALTER GIT REPOSITORY BUH_HOL.RAW.LAB_REPO FETCH;
