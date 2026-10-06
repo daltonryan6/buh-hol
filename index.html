@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BUH Hands-On Lab</title>
-  <link rel="stylesheet" href="assets/styles.css?v=2">
+  <link rel="stylesheet" href="assets/styles.css?v=3">
 </head>
 <body>
 
@@ -52,64 +52,9 @@
           <li>Follow the instructions in the email to activate your account and set your password</li>
           <li>Log in to your new Snowflake trial account &mdash; you should land on the <strong>Snowsight</strong> home page</li>
         </ol>
-        <div class="callout">
-          <p><strong>Already have a Snowflake account?</strong> You can use an existing trial or paid account. Just make sure you can log in as <strong>ACCOUNTADMIN</strong> and have a warehouse available.</p>
-        </div>
-        <hr>
-        <h3>0.2 Open Cortex Code</h3>
-        <ol>
-          <li>Log in to Snowsight and look for the <strong>Cortex Code icon</strong> in the <strong>lower-right corner</strong></li>
-          <li>Click it &mdash; the CoCo chat panel opens on the right side</li>
-          <li>You should see a chat input box at the bottom</li>
-        </ol>
-        <div class="callout">
-          <p><strong>What is Cortex Code?</strong> CoCo is Snowflake's AI-powered development platform. You describe what you want in plain English and it writes and runs the SQL for you. Think of it as an AI pair programmer that understands Snowflake natively.</p>
-        </div>
-        <hr>
-        <h3>0.3 Connect to the Lab's GitHub Repository</h3>
-        <p>Instead of downloading files, you'll connect Snowflake directly to the public GitHub repository. Copy and paste this prompt into Cortex Code:</p>
-        <div class="code-block">
-          <div class="code-header"><span>CoCo Prompt &ndash; Connect GitHub repo</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
-          <pre>Please connect my Snowflake account to a public GitHub repository
-so I can use it as a file source during this lab.
-
-1. Create a database called BUH_HOL with schema INBOUND if it doesn't exist
-2. Create an API integration called github_buh_lab for GitHub HTTPS access,
-   allowing the prefix https://github.com/daltonryan6/
-3. Create a Git repository object called LAB_REPO in the
-   BUH_HOL.INBOUND schema pointing to:
-   https://github.com/daltonryan6/buh-hol
-4. Fetch the latest contents from the repository
-5. Confirm everything worked by listing the top-level files and folders
-   available in the main branch</pre>
-        </div>
-        <div class="callout">
-          <p><strong>What's happening:</strong> CoCo creates a live connection between your Snowflake account and the lab's GitHub repo. All scripts will be accessible directly from GitHub &ndash; no manual file handling needed.</p>
-        </div>
-        <div class="callout callout-warn">
-          <p><strong>Important:</strong> When CoCo asks for permission to run a SQL statement, click the <strong>Allow</strong> dropdown and select <strong>"Allow in this chat"</strong> so you won't be prompted again.</p>
-        </div>
       </div>
-      <div class="setup-text">
-        <h3>What gets created</h3>
-        <p>The setup script (<code>00_setup.sql</code>) builds your lab environment:</p>
-        <ol>
-          <li><strong>BUH_HOL database</strong> with 4 schemas: INBOUND, CURATED, GOLD, GOVERNANCE</li>
-          <li><strong>5 Epic Clarity source tables</strong> with synthetic patient data:
-            <ul style="margin-top:4px;">
-              <li>PATIENT (15 rows) &mdash; demographics, MRN, SSN</li>
-              <li>PAT_ENC (25 rows) &mdash; encounters with type codes</li>
-              <li>CLARITY_SER (8 rows) &mdash; providers/physicians</li>
-              <li>ORDER_PROC (28 rows) &mdash; lab orders and results</li>
-              <li>HSP_ACCT_DX_LIST (30 rows) &mdash; diagnoses (ICD-10)</li>
-            </ul>
-          </li>
-          <li><strong>3 custom roles</strong>: BUH_LAB_ADMIN, BUH_LAB_ANALYST, BUH_LAB_CLINICIAN</li>
-          <li><strong>COMPUTE_WH</strong> warehouse (XS, auto-suspend 60s)</li>
-        </ol>
-        <div class="callout">
-          <p><strong>Clarity naming:</strong> Tables use Epic's actual column names &mdash; <code>PAT_ENC_CSN_ID</code>, <code>ENC_TYPE_C</code>, <code>RESULT_FLAG_C</code>. Dynamic tables in Step 2 will decode these into human-readable values.</p>
-        </div>
+      <div class="setup-img">
+        <img alt="Snowflake Trial Signup" src="assets/img/signup-page.png">
       </div>
     </div>
   </div>
@@ -374,19 +319,48 @@ so I can use it as a file source during this lab.
             <span class="badge badge-script">00_setup.sql</span>
           </div>
 
-          <h3>Scenario</h3>
-          <p>You work with <strong>Epic Clarity</strong> data. Today, Snowlift/Snowloader stages Clarity extracts into Snowflake, and Snowforge orchestrates SQL transformations. In this lab, you will replace that manual pipeline with <strong>dynamic tables</strong>, connect version-controlled SQL via <strong>Git workspaces</strong>, and protect sensitive patient data with <strong>tags and masking</strong>.</p>
+          <p>In this step, you'll set up your development environment by opening <strong>Cortex Code</strong> &mdash; Snowflake's AI-powered coding assistant &mdash; and connecting it to a GitHub repository. This gives you a fully integrated workspace where you can browse files, write code, and collaborate with AI, all without leaving Snowflake.</p>
 
-          <h3>What we will build</h3>
+          <h3>0.1 Open Cortex Code</h3>
           <ol>
-            <li><strong>Git Workspaces</strong> &ndash; Connect a GitHub repo and run SQL directly from it</li>
-            <li><strong>Dynamic Tables</strong> &ndash; Declarative pipelines: INBOUND &rarr; CURATED &rarr; GOLD</li>
-            <li><strong>Power BI &amp; Iceberg</strong> &ndash; Connection options, open-format gold layer, Fabric cost</li>
-            <li><strong>Tags &amp; Governance</strong> &ndash; PII tagging, tag-based masking, role-based access</li>
+            <li>Look for the <strong>Cortex Code icon</strong> in the <strong>lower-right corner</strong> of Snowsight (see screenshot below)</li>
+            <li>Click it &mdash; the Cortex Code panel will open on the right side of the screen</li>
+            <li>You should see a chat input box at the bottom of the panel</li>
           </ol>
+          <p><img alt="Cortex Code Icon" src="assets/img/coco-icon.png"></p>
+          <div class="callout callout-info">
+            <strong>What is Cortex Code?</strong> CoCo is Snowflake's AI-powered development platform. You describe what you want in plain English and it writes and runs the SQL for you. Think of it as an AI pair programmer that understands Snowflake natively.
+          </div>
+          <p><img alt="Cortex Code chat panel" src="assets/img/coco-panel.png"></p>
+          <div class="callout callout-info">
+            <strong>Pro tip:</strong> Collapse the side panels at the edges of the screen. This gives you more room to follow the guide or work in your editor.
+          </div>
+          <p><img alt="Collapse and expand side panels" src="assets/img/collapse-panels.png"></p>
 
-          <h3>0.1 Create a Git Workspace</h3>
-          <p>Now that Snowflake is connected to GitHub (from Account Setup above), create a visual workspace to browse the repo files:</p>
+          <h3>0.2 Connect to the Lab's GitHub Repository</h3>
+          <p>Instead of downloading files, you'll connect Snowflake directly to the public GitHub repository. Copy and paste this prompt into Cortex Code:</p>
+          <div class="code-block">
+            <div class="code-header"><span>CoCo Prompt &ndash; Connect GitHub repo</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
+            <pre>Please connect my Snowflake account to a public GitHub repository
+so I can use it as a file source during this lab.
+
+1. Create a database called BUH_HOL with schema INBOUND if it doesn't exist
+2. Create an API integration called github_buh_lab for GitHub HTTPS access,
+   allowing the prefix https://github.com/daltonryan6/
+3. Create a Git repository object called LAB_REPO in the
+   BUH_HOL.INBOUND schema pointing to:
+   https://github.com/daltonryan6/buh-hol
+4. Fetch the latest contents from the repository
+5. Confirm everything worked by listing the top-level files and folders
+   available in the main branch</pre>
+          </div>
+          <div class="callout callout-warn">
+            <strong>Important:</strong> When CoCo asks for permission to run a SQL statement, click the <strong>Allow</strong> dropdown and select <strong>"Allow in this chat"</strong> so you won't be prompted again for that statement type.
+          </div>
+          <p><img alt="Always allow permission" src="assets/img/allow-permission.png"></p>
+
+          <h3>0.3 Create a Git Workspace</h3>
+          <p>Now create a visual workspace to browse the repo files:</p>
           <ol>
             <li>In the left sidebar, go to <strong>Projects &gt; Workspaces</strong></li>
             <li>Click the <strong>+</strong> next to Databases and select <strong>Git workspace</strong></li>
@@ -396,11 +370,16 @@ so I can use it as a file source during this lab.
             <li>Choose <strong>Public repository</strong> for authentication</li>
             <li>Click <strong>Create</strong></li>
           </ol>
+          <p><img alt="Workspace setup" src="assets/img/workspace-setup.png"></p>
           <div class="callout callout-info">
             <strong>Why this matters:</strong> Your Snowflake account now has a live connection to GitHub. You can pull the latest changes, browse files, and run SQL &ndash; all directly from Snowsight without switching tools.
           </div>
+          <blockquote>
+            <strong>Note:</strong> Do not modify the SQL script &mdash; in the next step, we'll ask Cortex Code to run it for us exactly as-is.
+          </blockquote>
+          <p><img alt="Workspace file explorer" src="assets/img/workspace-files.png"></p>
 
-          <h3>0.2 Run the Setup Script via CoCo</h3>
+          <h3>0.4 Run the Setup Script via CoCo</h3>
           <p>Instead of copy-pasting SQL, ask CoCo to execute the setup script directly from the GitHub repo:</p>
           <div class="code-block">
             <div class="code-header"><span>CoCo Prompt &ndash; Execute setup script</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
@@ -429,6 +408,9 @@ so I can confirm everything loaded correctly.</pre>
               <tr><td>PATIENT</td><td>15</td></tr>
             </table>
           </div>
+          <p><img alt="Database Explorer" src="assets/img/database-explorer.png"></p>
+          <p>After setup completes, you may see a pill for <strong>BUH_HOL</strong> that lets you jump directly to the database and explore it.</p>
+          <p><img alt="Database Pill" src="assets/img/database-pill.png"></p>
 
           <div class="callout callout-info">
             <strong>Clarity naming conventions:</strong> The INBOUND tables use Epic's actual column names &ndash; <code>PAT_ENC_CSN_ID</code> (encounter key), <code>ENC_TYPE_C</code> (numeric type codes like 1=Inpatient, 3=Emergency), <code>RESULT_FLAG_C</code> (0=Normal, 1=High, 2=Low). Dynamic tables will decode these into readable values.

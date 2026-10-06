@@ -128,10 +128,13 @@ header .pill {
 .setup-section li { font-size: 14px; line-height: 1.6; margin-bottom: 4px; }
 .setup-section a { color: #29B5E8; }
 .setup-section .setup-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+.setup-section .setup-img { display: flex; align-items: flex-start; justify-content: center; }
 .setup-section .callout { background: rgba(255,255,255,0.05); border-left: 3px solid #29B5E8; padding: 12px 16px; border-radius: 6px; margin: 12px 0; }
 .setup-section .callout p { margin-bottom: 8px; }
 .setup-section .callout p:last-child { margin-bottom: 0; }
 .setup-section hr { border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 20px 0; }
+.setup-section img { max-width: 100%; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); margin: 12px 0; display: block; }
+.setup-section .callout-warn { border-left-color: #FBBF24; }
 
 /* ========== PLATFORM OVERVIEW TOGGLE ========== */
 .intro-deck-toggle {
@@ -375,6 +378,7 @@ header .pill {
 .docs-content li { font-size: 13.5px; color: #475569; margin-bottom: 5px; }
 .docs-content a { color: #2563EB; text-decoration: none; }
 .docs-content a:hover { text-decoration: underline; }
+.docs-content img { max-width: 100%; border-radius: 8px; border: 1px solid #E2E8F0; margin: 12px 0; display: block; }
 .docs-content strong { color: #334155; }
 
 /* Step meta badges */
