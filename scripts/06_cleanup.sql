@@ -1,22 +1,27 @@
 /*=============================================================================
   Brown University Health - Hands-On Lab
   Script 06: Cleanup
-  
-  WARNING: This drops the entire lab database and roles.
-           Make sure you have saved anything you want to keep.
+
+  Removes all lab objects created during the session.
+  Run this when you are finished with the lab.
 =============================================================================*/
 
 USE ROLE ACCOUNTADMIN;
 
--- Remove tag from warehouse before dropping database
+-- Remove warehouse tag before dropping (avoids orphaned tag references)
 ALTER WAREHOUSE COMPUTE_WH UNSET TAG BUH_HOL.GOVERNANCE.COST_CENTER;
 
--- Drop the database (removes all schemas, tables, dynamic tables, views, tags, policies)
+-- Drop the lab database (drops all schemas, tables, dynamic tables, tags, policies)
 DROP DATABASE IF EXISTS BUH_HOL;
 
 -- Drop lab roles
-DROP ROLE IF EXISTS BUH_LAB_CLINICIAN;
-DROP ROLE IF EXISTS BUH_LAB_ANALYST;
 DROP ROLE IF EXISTS BUH_LAB_ADMIN;
+DROP ROLE IF EXISTS BUH_LAB_ANALYST;
+DROP ROLE IF EXISTS BUH_LAB_CLINICIAN;
 
-SELECT 'Lab cleanup complete. Database BUH_HOL and lab roles have been dropped.' AS STATUS;
+-- Drop the Git integration
+DROP API INTEGRATION IF EXISTS github_buh_lab;
+
+-- NOTE: COMPUTE_WH is NOT dropped - it is a shared resource.
+-- If you created it just for this lab, uncomment:
+-- DROP WAREHOUSE IF EXISTS COMPUTE_WH;

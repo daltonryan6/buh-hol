@@ -1,117 +1,125 @@
 /*=============================================================================
   Brown University Health - Hands-On Lab
-  Script 01: Shared Workspaces & Git Integration
-  
-  GOAL: Understand how to use Snowflake Git-based workspaces to
-        manage, version, and publish SQL code as a team.
-  
+  Script 01: Shared Workspaces & Git Integration (Hands-On)
+
+  GOAL: Connect a Git repo as a Snowflake workspace, browse files,
+        and run the setup script directly from the repository.
+
   TIME: ~15 minutes
-  PREREQUISITE: Run 00_setup.sql first
-  
-  NOTE: This module is primarily a walkthrough. The SQL below
-        demonstrates the key concepts, but the real value is
-        in the workflow you see in the Snowflake UI.
+  PREREQUISITE: Snowflake account with ACCOUNTADMIN
+
+  NOTE: The instructor will walk through the API integration setup.
+        Attendees will browse and run files from the connected repo.
 =============================================================================*/
 
-USE DATABASE BUH_HOL;
-USE WAREHOUSE COMPUTE_WH;
 USE ROLE ACCOUNTADMIN;
+USE WAREHOUSE COMPUTE_WH;
 
 -- ============================================================
 -- PART A: What are workspaces?
 -- ============================================================
 
--- Workspaces are Snowflake's built-in way to connect a Git repo
--- to your Snowflake account. You can:
---   1. Clone a repo (GitHub, GitLab, Azure DevOps, Bitbucket)
---   2. Browse and run .sql files directly in Snowsight
---   3. Publish changes back to Git
---   4. Share versioned code across your team
-
--- This lab itself was delivered via a Git workspace.
--- The scripts you are running right now live in a Git repo.
-
--- ============================================================
--- PART B: Create a Git integration (instructor demo)
--- ============================================================
-
--- Step 1: Create an API integration for GitHub
--- (This is what connects Snowflake to your Git provider)
-
--- CREATE OR REPLACE API INTEGRATION github_integration
---   API_PROVIDER = GIT_HTTPS_API
---   API_ALLOWED_PREFIXES = ('https://github.com/daltonryan6/')
---   ENABLED = TRUE;
-
--- Step 2: Create a Git repository object
--- CREATE OR REPLACE GIT REPOSITORY BUH_HOL.RAW.LAB_REPO
---   API_INTEGRATION = github_integration
---   ORIGIN = 'https://github.com/daltonryan6/buh-hol.git';
-
--- Step 3: Fetch latest from remote
--- ALTER GIT REPOSITORY BUH_HOL.RAW.LAB_REPO FETCH;
-
--- Step 4: List branches and files
--- SHOW GIT BRANCHES IN BUH_HOL.RAW.LAB_REPO;
--- LS @BUH_HOL.RAW.LAB_REPO/branches/main/scripts/;
+-- Workspaces connect a Git repo (GitHub, GitLab, Azure DevOps)
+-- directly to your Snowflake account. You can:
+--   1. Browse repo files in Snowsight like a file system
+--   2. Run .sql files without downloading or copy-pasting
+--   3. Fetch the latest changes from Git at any time
+--   4. Share versioned code across your entire team
+--
+-- This lab itself is delivered via a Git workspace.
+-- You are about to connect the lab repo and run scripts from it.
 
 -- ============================================================
--- PART C: Key workspace concepts
+-- PART B: Create the Git integration (instructor-led)
 -- ============================================================
 
--- 1. BROWSING FILES
--- In Snowsight, navigate to: Data > Databases > BUH_HOL > 
--- Stages > LAB_REPO. You can browse the repo like a file system.
+-- Step 1: API integration - connects Snowflake to GitHub
+CREATE OR REPLACE API INTEGRATION github_buh_lab
+  API_PROVIDER = GIT_HTTPS_API
+  API_ALLOWED_PREFIXES = ('https://github.com/daltonryan6/')
+  ENABLED = TRUE;
 
--- 2. RUNNING SQL FROM A REPO
--- You can execute SQL files directly from the stage:
--- EXECUTE IMMEDIATE FROM @BUH_HOL.RAW.LAB_REPO/branches/main/scripts/00_setup.sql;
+-- Step 2: Create a database for our lab (needed before creating the repo object)
+CREATE OR REPLACE DATABASE BUH_HOL;
+CREATE SCHEMA IF NOT EXISTS BUH_HOL.INBOUND;
 
--- 3. WORKSPACES IN CORTEX CODE
--- Cortex Code connects to Git natively. You can:
---   - Open a workspace from a Git repo
---   - Edit files with AI assistance
---   - Commit and push changes
---   - Run SQL directly against Snowflake
-
--- ============================================================
--- PART D: Practical exercise - explore the repo
--- ============================================================
-
--- If a Git repository object has been configured, try these:
-
--- List what is in the repo
--- LS @BUH_HOL.RAW.LAB_REPO/branches/main/;
-
--- See the scripts
--- LS @BUH_HOL.RAW.LAB_REPO/branches/main/scripts/;
-
--- Read a file's contents
--- SELECT $1 FROM @BUH_HOL.RAW.LAB_REPO/branches/main/README.md
--- (FILE_FORMAT => (TYPE=CSV FIELD_DELIMITER=NONE RECORD_DELIMITER=NONE));
+-- Step 3: Git repository object - points to the lab repo
+CREATE OR REPLACE GIT REPOSITORY BUH_HOL.INBOUND.LAB_REPO
+  API_INTEGRATION = github_buh_lab
+  ORIGIN = 'https://github.com/daltonryan6/buh-hol.git';
 
 -- ============================================================
--- PART E: Why this matters for your team
+-- PART C: Explore the repo (everyone does this)
+-- ============================================================
+
+-- Fetch latest from remote
+ALTER GIT REPOSITORY BUH_HOL.INBOUND.LAB_REPO FETCH;
+
+-- List branches
+SHOW GIT BRANCHES IN BUH_HOL.INBOUND.LAB_REPO;
+
+-- Browse the repo root
+LS @BUH_HOL.INBOUND.LAB_REPO/branches/main/;
+
+-- Browse the scripts folder - these are the files we will run today
+LS @BUH_HOL.INBOUND.LAB_REPO/branches/main/scripts/;
+
+-- ============================================================
+-- PART D: Run the setup script FROM the repo
+-- ============================================================
+
+-- This is the key moment: instead of copy-pasting SQL,
+-- you execute it directly from the versioned repository.
+-- Everyone on the team runs the same code, every time.
+
+-- Drop the database we just created (the setup script recreates it)
+DROP DATABASE IF EXISTS BUH_HOL;
+
+-- Run the full setup from the repo
+EXECUTE IMMEDIATE FROM @BUH_HOL.INBOUND.LAB_REPO/branches/main/scripts/00_setup.sql;
+
+-- NOTE: If the EXECUTE IMMEDIATE fails because BUH_HOL was just dropped,
+-- run 00_setup.sql manually from the worksheet instead. The Git integration
+-- and repo object will be recreated after setup completes.
+
+-- ============================================================
+-- PART E: Verify setup worked
+-- ============================================================
+
+SELECT 'PATIENT' AS TBL, COUNT(*) AS ROWS FROM BUH_HOL.INBOUND.PATIENT
+UNION ALL SELECT 'PAT_ENC', COUNT(*) FROM BUH_HOL.INBOUND.PAT_ENC
+UNION ALL SELECT 'CLARITY_SER', COUNT(*) FROM BUH_HOL.INBOUND.CLARITY_SER
+UNION ALL SELECT 'ORDER_PROC', COUNT(*) FROM BUH_HOL.INBOUND.ORDER_PROC
+UNION ALL SELECT 'HSP_ACCT_DX_LIST', COUNT(*) FROM BUH_HOL.INBOUND.HSP_ACCT_DX_LIST
+ORDER BY TBL;
+
+-- ============================================================
+-- PART F: Why this matters for your team
 -- ============================================================
 
 -- Without Git workspaces:
---   - SQL lives in local files, Slack messages, or shared drives
+--   - SQL lives in local files, Slack, shared drives
 --   - No version history, no code review, no rollback
 --   - "Which version is in prod?" is unanswerable
---   - Onboarding a new analyst means copying files around
-
+--   - Onboarding means copying files around
+--
 -- With Git workspaces:
 --   - SQL is versioned in Git alongside everything else
 --   - Changes go through pull requests and review
 --   - Any team member can clone and run the latest code
---   - Deployments are traceable: "commit abc123 is in prod"
+--   - Deployments are traceable: commit abc123 is in prod
+--
+-- For your Snowforge workflow: Git workspaces give you the
+-- version control layer. Combined with dynamic tables (next step),
+-- you can replace scheduled transformation scripts with
+-- declarative SQL that auto-refreshes.
 
 -- ============================================================
 -- CHECKPOINT
 -- ============================================================
 
--- You should understand:
---   1. What a Git integration and Git repository object are
---   2. How to browse and run SQL files from a repo in Snowsight
---   3. How Cortex Code connects Git + Snowflake
---   4. Why version-controlled SQL is better than file shares
+-- You should be able to:
+--   1. See the Git repo object in Snowsight (Data > BUH_HOL > Stages)
+--   2. Browse the scripts/ folder
+--   3. Have all 5 INBOUND tables populated with Clarity data
+--   4. Understand how Git workspaces replace file-share chaos
