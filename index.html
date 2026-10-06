@@ -33,6 +33,223 @@
     </div>
   </div>
 
+  <!-- ========== ACCOUNT SETUP (collapsible) ========== -->
+  <div class="setup-toggle" id="setup-toggle" onclick="toggleSetup()">
+    Account Setup <span class="toggle-hint">(click to expand)</span><span class="toggle-arrow">&#9660;</span>
+  </div>
+  <div class="setup-section" id="setup-section">
+    <h2>Create Your Snowflake Trial Account</h2>
+    <div class="setup-layout">
+      <div class="setup-text">
+        <h3>0.1 Sign Up and Log In</h3>
+        <p style="color:#FBBF24;"><strong>Please use your laptop (not your phone) for signup and the entire lab.</strong></p>
+        <ol>
+          <li>Navigate to the <a href="https://signup.snowflake.com/" target="_blank" style="font-weight:700;">signup URL</a></li>
+          <li>Fill out the registration form with your details</li>
+          <li>Select <strong>Enterprise edition</strong>, <strong>AWS</strong> as the cloud provider, and <strong>US East (Virginia)</strong> as the region</li>
+          <li><strong>Before clicking "Get Started"</strong> &mdash; confirm the region at the bottom-right of the page is set to <strong>US East (Northern Virginia)</strong></li>
+          <li>Check your email for a confirmation from Snowflake</li>
+          <li>Follow the instructions in the email to activate your account and set your password</li>
+          <li>Log in to your new Snowflake trial account &mdash; you should land on the <strong>Snowsight</strong> home page</li>
+        </ol>
+        <hr>
+        <h3>0.2 Download the Lab Scripts</h3>
+        <ol>
+          <li>Go to the <a href="https://github.com/daltonryan6/buh-hol" target="_blank">GitHub repo</a></li>
+          <li>Click <strong>Code &rarr; Download ZIP</strong> or clone the repo</li>
+          <li>You will need the files in the <code>scripts/</code> folder (00_setup.sql through 06_cleanup.sql)</li>
+        </ol>
+        <div class="callout">
+          <p><strong>Already have a Snowflake account?</strong> You can use an existing trial or paid account. Just make sure you can log in as <strong>ACCOUNTADMIN</strong> and have a warehouse available.</p>
+        </div>
+      </div>
+      <div class="setup-text">
+        <h3>What gets created</h3>
+        <p>The setup script (<code>00_setup.sql</code>) builds your lab environment:</p>
+        <ol>
+          <li><strong>BUH_HOL database</strong> with 4 schemas: INBOUND, CURATED, GOLD, GOVERNANCE</li>
+          <li><strong>5 Epic Clarity source tables</strong> with synthetic patient data:
+            <ul style="margin-top:4px;">
+              <li>PATIENT (15 rows) &mdash; demographics, MRN, SSN</li>
+              <li>PAT_ENC (25 rows) &mdash; encounters with type codes</li>
+              <li>CLARITY_SER (8 rows) &mdash; providers/physicians</li>
+              <li>ORDER_PROC (28 rows) &mdash; lab orders and results</li>
+              <li>HSP_ACCT_DX_LIST (30 rows) &mdash; diagnoses (ICD-10)</li>
+            </ul>
+          </li>
+          <li><strong>3 custom roles</strong>: BUH_LAB_ADMIN, BUH_LAB_ANALYST, BUH_LAB_CLINICIAN</li>
+          <li><strong>COMPUTE_WH</strong> warehouse (XS, auto-suspend 60s)</li>
+        </ol>
+        <div class="callout">
+          <p><strong>Clarity naming:</strong> Tables use Epic's actual column names &mdash; <code>PAT_ENC_CSN_ID</code>, <code>ENC_TYPE_C</code>, <code>RESULT_FLAG_C</code>. Dynamic tables in Step 2 will decode these into human-readable values.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== PLATFORM OVERVIEW (collapsible slide deck) ========== -->
+  <div class="intro-deck-toggle" id="intro-deck-toggle" onclick="toggleIntroDeck()">
+    Platform Overview &amp; Context <span class="toggle-hint">(click to expand)</span><span class="toggle-arrow">&#9660;</span>
+  </div>
+  <div class="intro-deck" id="intro-deck">
+
+    <!-- Slide 0: What is Snowflake? -->
+    <div class="deck-slide active" data-deck-slide="0">
+      <div class="deck-eyebrow">The AI Data Cloud</div>
+      <h2 class="deck-h2">What is <span>Snowflake</span>?</h2>
+      <p class="deck-subtitle">A single platform where data storage, processing, AI, collaboration, and app development converge &mdash; governed end to end.</p>
+      <div class="deck-platform-container">
+        <div class="deck-platform-label">Unified Governance &middot; RBAC &middot; Encryption &middot; Data Sharing Policies</div>
+        <div class="deck-platform-grid">
+          <div class="deck-plat-card secondary"><div class="dpc-icon">&#x1F5C4;&#xFE0F;</div><div class="dpc-name">Data Warehouse</div><div class="dpc-desc">Elastic compute, near-zero admin</div></div>
+          <div class="deck-plat-card"><div class="dpc-icon">&#x1F30A;</div><div class="dpc-name">Data Lake</div><div class="dpc-desc">Iceberg, Parquet, unstructured</div></div>
+          <div class="deck-plat-card"><div class="dpc-icon">&#x1F91D;</div><div class="dpc-name">Data Sharing</div><div class="dpc-desc">Marketplace, clean rooms, cross-cloud</div></div>
+          <div class="deck-plat-card secondary"><div class="dpc-icon">&#x1F4CA;</div><div class="dpc-name">Apps &amp; Streamlit</div><div class="dpc-desc">Build &amp; deploy apps on your data</div></div>
+          <div class="deck-plat-card highlight"><div class="dpc-icon">&#x1F504;</div><div class="dpc-name">Data Engineering</div><div class="dpc-desc">Dynamic tables, Snowpipe, tasks</div></div>
+          <div class="deck-plat-card"><div class="dpc-icon">&#x1F9EA;</div><div class="dpc-name">ML &amp; Data Science</div><div class="dpc-desc">Feature store, model registry, notebooks</div></div>
+          <div class="deck-plat-card"><div class="dpc-icon">&#x1F9E0;</div><div class="dpc-name">Cortex AI</div><div class="dpc-desc">LLMs, agents, search, analyst</div></div>
+          <div class="deck-plat-card secondary"><div class="dpc-icon">&#x1F6E1;&#xFE0F;</div><div class="dpc-name">Security &amp; Governance</div><div class="dpc-desc">RBAC, masking, lineage, auditing</div></div>
+        </div>
+      </div>
+      <div class="deck-stat-bar">
+        <div class="deck-stat-item"><div class="deck-stat-num">10K+</div><div class="deck-stat-label">Customers</div></div>
+        <div class="deck-stat-item"><div class="deck-stat-num">3</div><div class="deck-stat-label">Major Clouds</div></div>
+        <div class="deck-stat-item"><div class="deck-stat-num">30+</div><div class="deck-stat-label">Regions</div></div>
+      </div>
+    </div>
+
+    <!-- Slide 1: Data Engineering Inside Snowflake -->
+    <div class="deck-slide" data-deck-slide="1">
+      <h2 class="deck-h2"><span>Data Engineering</span> Inside Snowflake</h2>
+      <p class="deck-subtitle">Every data pipeline capability &mdash; ingestion, transformation, orchestration, governance &mdash; lives natively inside Snowflake, right next to your data.</p>
+      <div class="deck-arch-grid">
+        <div class="deck-ann deck-ann-right row-1">
+          <div class="deck-annotation">
+            <div class="dann-title">Orchestration</div>
+            <div class="dann-desc">Dynamic tables replace cron jobs and manual MERGE scripts. Declare the output; Snowflake handles refresh.</div>
+          </div>
+        </div>
+        <div class="deck-ann deck-ann-left row-2">
+          <div class="deck-annotation">
+            <div class="dann-title">Version Control</div>
+            <div class="dann-desc">Git Workspaces connect repos directly to Snowflake. Browse, run, and deploy SQL from version-controlled source.</div>
+          </div>
+        </div>
+        <div class="deck-ann deck-ann-right row-3">
+          <div class="deck-annotation">
+            <div class="dann-title">Open Formats</div>
+            <div class="dann-desc">Iceberg tables store data in open Parquet. Power BI, Spark, and Trino read natively &mdash; no Snowflake compute.</div>
+          </div>
+        </div>
+        <div class="deck-ann deck-ann-left row-4">
+          <div class="deck-annotation">
+            <div class="dann-title">Governance</div>
+            <div class="dann-desc">Tags, masking policies, RBAC, and lineage &mdash; applied across every layer from INBOUND to GOLD.</div>
+          </div>
+        </div>
+        <div class="deck-arch-stack">
+          <div class="deck-arch-label">Snowflake Data Engineering Stack</div>
+          <div class="deck-arch-section">
+            <div class="deck-arch-layer-label">Transformation</div>
+            <div class="deck-arch-layer">
+              <div class="deck-arch-chip highlight"><div class="dac-icon">&#9889;</div><div class="dac-name">Dynamic Tables</div><div class="dac-desc">Declarative pipelines</div></div>
+              <div class="deck-arch-chip"><div class="dac-icon">&#x1F504;</div><div class="dac-name">Streams + Tasks</div><div class="dac-desc">CDC &amp; scheduling</div></div>
+            </div>
+          </div>
+          <div class="deck-arch-section">
+            <div class="deck-arch-layer-label">Ingestion</div>
+            <div class="deck-arch-layer">
+              <div class="deck-arch-chip"><div class="dac-icon">&#x1F4E5;</div><div class="dac-name">Snowpipe</div><div class="dac-desc">Auto-ingest from cloud</div></div>
+              <div class="deck-arch-chip"><div class="dac-icon">&#x1F517;</div><div class="dac-name">Connectors</div><div class="dac-desc">Kafka, Spark, JDBC</div></div>
+            </div>
+          </div>
+          <div class="deck-arch-section">
+            <div class="deck-arch-layer-label">Storage &amp; Format</div>
+            <div class="deck-arch-layer">
+              <div class="deck-arch-chip"><div class="dac-icon">&#x2744;&#xFE0F;</div><div class="dac-name">Snowflake Tables</div><div class="dac-desc">Micro-partitions, time travel</div></div>
+              <div class="deck-arch-chip"><div class="dac-icon">&#x1F9CA;</div><div class="dac-name">Iceberg Tables</div><div class="dac-desc">Open Parquet format</div></div>
+            </div>
+          </div>
+          <div class="deck-arch-section">
+            <div class="deck-arch-layer-label">Development</div>
+            <div class="deck-arch-layer">
+              <div class="deck-arch-chip coco"><div class="dac-icon">&#x1F4BB;</div><div class="dac-name">Cortex Code (CoCo)</div><div class="dac-desc">AI-powered SQL dev</div></div>
+              <div class="deck-arch-chip"><div class="dac-icon">&#x1F4C2;</div><div class="dac-name">Git Workspaces</div><div class="dac-desc">Version-controlled SQL</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 2: Why This Matters -->
+    <div class="deck-slide" data-deck-slide="2">
+      <div class="deck-eyebrow">For Brown University Health</div>
+      <h2 class="deck-h2">Why <span>This Matters</span></h2>
+      <p class="deck-subtitle">What changes when data engineering goes from manual scripts to declarative pipelines?</p>
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; max-width:820px; margin:0 auto;">
+        <div class="value-card">
+          <div class="vc-bg-icon">&#9889;</div>
+          <div style="font-size:28px;margin-bottom:8px;">&#9889;</div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:6px;">Scripts &rarr; Declarations</div>
+          <div style="font-size:12px;opacity:0.75;line-height:1.5;">What Snowforge orchestrates today &mdash; MERGE scripts, dependency chains, error handling &mdash; becomes a single CREATE DYNAMIC TABLE statement.</div>
+        </div>
+        <div class="value-card">
+          <div class="vc-bg-icon">&#x1F512;</div>
+          <div style="font-size:28px;margin-bottom:8px;">&#x1F512;</div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:6px;">Governance Built In</div>
+          <div style="font-size:12px;opacity:0.75;line-height:1.5;">Tag PII columns once, attach masking to the tag. Every role &mdash; admin, clinician, analyst &mdash; sees exactly what they should. No per-column policies.</div>
+        </div>
+        <div class="value-card">
+          <div class="vc-bg-icon">&#x1F4CA;</div>
+          <div style="font-size:28px;margin-bottom:8px;">&#x1F4CA;</div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:6px;">Open Format for BI</div>
+          <div style="font-size:12px;opacity:0.75;line-height:1.5;">Write GOLD tables as Iceberg to OneLake. Power BI reads via Direct Lake &mdash; no Snowflake warehouse running during dashboard use.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: What you'll build -->
+    <div class="deck-slide" data-deck-slide="3">
+      <div class="deck-eyebrow">Today's mission</div>
+      <h2 class="deck-h2">What you'll build in <span>120 minutes</span></h2>
+      <p class="deck-subtitle">Using Epic Clarity data, you'll build a complete data engineering pipeline &mdash; from raw extracts to governed analytics.</p>
+      <div style="display:grid; grid-template-columns:1fr auto 1fr auto 1fr; align-items:center; gap:0; max-width:780px; margin:0 auto;">
+        <div style="text-align:center; display:flex; flex-direction:column; align-items:center;">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,0.5);margin-bottom:10px;">Inbound</div>
+          <div class="deck-arch-chip" style="width:180px;"><div class="dac-icon">&#x1F3E5;</div><div class="dac-name">Clarity Tables</div><div class="dac-desc">PATIENT, PAT_ENC,<br>CLARITY_SER, orders, dx</div></div>
+        </div>
+        <div style="color:#29B5E8;font-size:20px;font-weight:700;padding:0 14px;">&rarr;</div>
+        <div style="text-align:center; display:flex; flex-direction:column; align-items:center;">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,0.5);margin-bottom:10px;">Pipeline</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+            <div class="deck-arch-chip" style="width:180px;"><div class="dac-icon">&#9889;</div><div class="dac-name">Dynamic Tables</div><div class="dac-desc">CURATED dims + facts</div></div>
+            <div class="deck-arch-chip" style="width:180px;"><div class="dac-icon">&#x1F3C6;</div><div class="dac-name">GOLD Layer</div><div class="dac-desc">Dashboards, ED, readmissions</div></div>
+          </div>
+        </div>
+        <div style="color:#29B5E8;font-size:20px;font-weight:700;padding:0 14px;">&rarr;</div>
+        <div style="text-align:center; display:flex; flex-direction:column; align-items:center;">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,0.5);margin-bottom:10px;">Consume</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+            <div class="deck-arch-chip" style="width:180px;"><div class="dac-icon">&#x1F4CA;</div><div class="dac-name">Power BI</div><div class="dac-desc">DirectQuery or Direct Lake</div></div>
+            <div class="deck-arch-chip" style="width:180px;"><div class="dac-icon">&#x1F6E1;&#xFE0F;</div><div class="dac-name">Governed Access</div><div class="dac-desc">Tags + masking by role</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deck navigation -->
+    <div class="deck-nav">
+      <button class="deck-arrow-btn" onclick="introDeckNav(-1)">&larr;</button>
+      <button class="deck-dot active" onclick="introDeckGo(0)"></button>
+      <button class="deck-dot" onclick="introDeckGo(1)"></button>
+      <button class="deck-dot" onclick="introDeckGo(2)"></button>
+      <button class="deck-dot" onclick="introDeckGo(3)"></button>
+      <button class="deck-arrow-btn" onclick="introDeckNav(1)">&rarr;</button>
+    </div>
+    <div class="deck-slide-num" id="intro-slide-num">1</div>
+    <button class="deck-collapse-btn" onclick="startLab()">Start Lab &#8595;</button>
+  </div>
+
   <div class="wrapper">
     <!-- ========== FLOW OVERVIEW ========== -->
     <div class="flow-section">

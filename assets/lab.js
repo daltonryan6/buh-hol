@@ -1,3 +1,55 @@
+/* ========== COLLAPSIBLE SECTIONS ========== */
+let introDeckSlide = 0;
+const introTotalSlides = 4;
+
+function collapseSetup() {
+  const section = document.getElementById('setup-section');
+  const toggle = document.getElementById('setup-toggle');
+  if (section) section.classList.remove('expanded');
+  if (toggle) toggle.classList.remove('open');
+}
+
+function collapseIntroDeck() {
+  const deck = document.getElementById('intro-deck');
+  const toggle = document.getElementById('intro-deck-toggle');
+  if (deck) deck.classList.remove('expanded');
+  if (toggle) toggle.classList.remove('open');
+}
+
+function toggleSetup() {
+  const section = document.getElementById('setup-section');
+  const toggle = document.getElementById('setup-toggle');
+  section.classList.toggle('expanded');
+  toggle.classList.toggle('open');
+}
+
+function toggleIntroDeck() {
+  const deck = document.getElementById('intro-deck');
+  const toggle = document.getElementById('intro-deck-toggle');
+  const isOpening = !deck.classList.contains('expanded');
+  deck.classList.toggle('expanded');
+  toggle.classList.toggle('open');
+  if (isOpening) collapseSetup();
+}
+
+function startLab() {
+  collapseIntroDeck();
+  collapseSetup();
+}
+
+function introDeckGo(n) {
+  introDeckSlide = n;
+  document.querySelectorAll('#intro-deck .deck-slide').forEach((s, i) => s.classList.toggle('active', i === n));
+  document.querySelectorAll('#intro-deck .deck-dot').forEach((d, i) => d.classList.toggle('active', i === n));
+  const numEl = document.getElementById('intro-slide-num');
+  if (numEl) numEl.textContent = n + 1;
+}
+
+function introDeckNav(dir) {
+  const next = introDeckSlide + dir;
+  if (next >= 0 && next < introTotalSlides) introDeckGo(next);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const steps = document.querySelectorAll('.step');
   const navItems = document.querySelectorAll('.nav-item');
@@ -54,9 +106,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Keyboard nav
+  // Keyboard nav (deck takes priority when expanded)
   document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    const deck = document.getElementById('intro-deck');
+    if (deck && deck.classList.contains('expanded')) {
+      if (e.key === 'ArrowRight') { introDeckNav(1); e.preventDefault(); }
+      if (e.key === 'ArrowLeft') { introDeckNav(-1); e.preventDefault(); }
+      return;
+    }
     if (e.key === 'ArrowRight') { e.preventDefault(); showStep(currentStep + 1); }
     if (e.key === 'ArrowLeft') { e.preventDefault(); showStep(currentStep - 1); }
   });
