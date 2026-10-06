@@ -57,6 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const themeBtn = document.querySelector('.theme-toggle');
   let currentStep = 0;
 
+  let initialized = false;
+
   function showStep(idx) {
     if (idx < 0 || idx >= steps.length) return;
     steps.forEach(s => s.classList.remove('active'));
@@ -66,7 +68,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (navItems[idx]) navItems[idx].classList.add('active');
     if (flowCards[idx]) flowCards[idx].classList.add('active');
     currentStep = idx;
-    window.scrollTo({ top: document.querySelector('.docs-content').offsetTop - 20, behavior: 'smooth' });
+    if (initialized) {
+      window.scrollTo({ top: document.querySelector('.docs-content').offsetTop - 20, behavior: 'smooth' });
+    }
   }
 
   navItems.forEach((item, i) => item.addEventListener('click', () => showStep(i)));
@@ -120,4 +124,5 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   showStep(0);
+  initialized = true;
 });
