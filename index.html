@@ -398,18 +398,16 @@ so I can use it as a file source during this lab.
           <p>Copy and paste this prompt into Cortex Code:</p>
           <div class="code-block">
             <div class="code-header"><span>CoCo Prompt &ndash; Execute setup script</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
-            <pre>Please execute the setup script from the GitHub repository we connected.
-Run this file to create the BUH_HOL database, warehouse, all tables,
-and load all sample data:
+            <pre>Open the file scripts/00_setup.sql from the buh-hol Git workspace
+and run the full script. It creates the BUH_HOL database, warehouse,
+roles, schemas, and loads all sample data.
 
-@BUH_HOL.INBOUND.LAB_REPO/branches/main/scripts/00_setup.sql
-
-Use EXECUTE IMMEDIATE FROM to run it. After execution, show me a summary
-table of every table created in the INBOUND schema with its row count
-so I can confirm everything loaded correctly.</pre>
+After execution, show me a summary table of every table in the
+INBOUND schema with its row count so I can confirm everything
+loaded correctly.</pre>
           </div>
           <div class="callout callout-info">
-            <strong>What's happening:</strong> CoCo pulls the setup script directly from GitHub and executes it. The script creates the BUH_HOL database with INBOUND, CURATED, GOLD, and GOVERNANCE schemas, plus five Epic Clarity source tables with synthetic clinical data.
+            <strong>What's happening:</strong> CoCo reads the setup script from your Git workspace and executes the SQL. The script creates the BUH_HOL database with INBOUND, CURATED, GOLD, and GOVERNANCE schemas, plus five Epic Clarity source tables with synthetic clinical data.
           </div>
 
           <div class="expected-output">
