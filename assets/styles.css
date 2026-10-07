@@ -29,10 +29,11 @@ header h1 {
   position: relative;
 }
 header .header-logo {
-  height: 48px;
-  margin-bottom: 14px;
+  width: 340px;
+  max-width: 80%;
+  margin-bottom: 18px;
   position: relative;
-  filter: brightness(0) invert(1);
+  border-radius: 8px;
 }
 header h1 span { color: #29B5E8; }
 header .tagline {
