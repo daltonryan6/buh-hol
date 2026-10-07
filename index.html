@@ -230,37 +230,43 @@
           <div class="fc-icon">🚀</div>
           <div class="fc-num fc-num-0">Step 0</div>
           <div class="fc-title">Get Started</div>
-          <div class="fc-time">15 min</div>
+          <div class="fc-time">10 min</div>
         </div>
         <div class="flow-card" data-step="1">
-          <div class="fc-icon">⚡</div>
+          <div class="fc-icon">🗄️</div>
           <div class="fc-num fc-num-1">Step 1</div>
+          <div class="fc-title">Build Database</div>
+          <div class="fc-time">10 min</div>
+        </div>
+        <div class="flow-card" data-step="2">
+          <div class="fc-icon">⚡</div>
+          <div class="fc-num fc-num-2">Step 2</div>
           <div class="fc-title">Dynamic Tables</div>
           <div class="fc-time">40 min</div>
         </div>
-        <div class="flow-card" data-step="2">
+        <div class="flow-card" data-step="3">
           <div class="fc-icon">📊</div>
-          <div class="fc-num fc-num-2">Step 2</div>
+          <div class="fc-num fc-num-3">Step 3</div>
           <div class="fc-title">Power BI / Iceberg</div>
           <div class="fc-time">15 min</div>
         </div>
-        <div class="flow-card" data-step="3">
+        <div class="flow-card" data-step="4">
           <div class="fc-icon">🏷️</div>
-          <div class="fc-num fc-num-3">Step 3</div>
+          <div class="fc-num fc-num-4">Step 4</div>
           <div class="fc-title">Tags &amp; Masking</div>
           <div class="fc-time">20 min</div>
         </div>
-        <div class="flow-card" data-step="4">
+        <div class="flow-card" data-step="5">
           <div class="fc-icon">🔗</div>
-          <div class="fc-num fc-num-4">Step 4</div>
+          <div class="fc-num fc-num-5">Step 5</div>
           <div class="fc-title">Together</div>
           <div class="fc-time">15 min</div>
         </div>
-        <div class="flow-card" data-step="5">
+        <div class="flow-card" data-step="6">
           <div class="fc-icon">🧹</div>
-          <div class="fc-num fc-num-5">Step 5</div>
+          <div class="fc-num fc-num-6">Step 6</div>
           <div class="fc-title">Cleanup</div>
-          <div class="fc-time">5 min</div>
+          <div class="fc-time">10 min</div>
         </div>
       </div>
     </div>
@@ -273,27 +279,31 @@
         <div class="docs-nav-head">Steps</div>
         <div class="nav-item active" data-step="0">
           <div class="nav-num fc-num-0">0</div>
-          <div><div class="nav-title">Get Started</div><div class="nav-time">15 min</div></div>
+          <div><div class="nav-title">Get Started</div><div class="nav-time">10 min</div></div>
         </div>
         <div class="nav-item" data-step="1">
           <div class="nav-num fc-num-1">1</div>
-          <div><div class="nav-title">Dynamic Tables</div><div class="nav-time">40 min</div></div>
+          <div><div class="nav-title">Build Database</div><div class="nav-time">10 min</div></div>
         </div>
         <div class="nav-item" data-step="2">
           <div class="nav-num fc-num-2">2</div>
-          <div><div class="nav-title">Power BI / Iceberg</div><div class="nav-time">15 min</div></div>
+          <div><div class="nav-title">Dynamic Tables</div><div class="nav-time">40 min</div></div>
         </div>
         <div class="nav-item" data-step="3">
           <div class="nav-num fc-num-3">3</div>
-          <div><div class="nav-title">Tags &amp; Governance</div><div class="nav-time">20 min</div></div>
+          <div><div class="nav-title">Power BI / Iceberg</div><div class="nav-time">15 min</div></div>
         </div>
         <div class="nav-item" data-step="4">
           <div class="nav-num fc-num-4">4</div>
-          <div><div class="nav-title">Putting It Together</div><div class="nav-time">15 min</div></div>
+          <div><div class="nav-title">Tags &amp; Governance</div><div class="nav-time">20 min</div></div>
         </div>
         <div class="nav-item" data-step="5">
           <div class="nav-num fc-num-5">5</div>
-          <div><div class="nav-title">Cleanup</div><div class="nav-time">5 min</div></div>
+          <div><div class="nav-title">Putting It Together</div><div class="nav-time">15 min</div></div>
+        </div>
+        <div class="nav-item" data-step="6">
+          <div class="nav-num fc-num-6">6</div>
+          <div><div class="nav-title">Cleanup</div><div class="nav-time">10 min</div></div>
         </div>
       </nav>
 
@@ -304,7 +314,7 @@
         <section class="step active" id="step-0">
           <h2>Get Started</h2>
           <div class="step-meta">
-            <span class="badge badge-time">0:00 &ndash; 0:15</span>
+            <span class="badge badge-time">0:00 &ndash; 0:10</span>
             <span class="badge badge-script">00_setup.sql</span>
           </div>
 
@@ -368,8 +378,24 @@ so I can use it as a file source during this lab.
           </blockquote>
           <p><img alt="Workspace file explorer" src="assets/img/workspace-files.png"></p>
 
-          <h3>0.4 Run the Setup Script via CoCo</h3>
-          <p>Instead of copy-pasting SQL, ask CoCo to execute the setup script directly from the GitHub repo:</p>
+          <div class="step-nav">
+            <span></span>
+            <button class="nav-btn nav-btn-next">Next &rarr;</button>
+          </div>
+        </section>
+
+        <!-- ===================== STEP 1 ===================== -->
+        <section class="step" id="step-1">
+          <h2>Build the Database &amp; Load Data</h2>
+          <div class="step-meta">
+            <span class="badge badge-time">0:10 &ndash; 0:20</span>
+            <span class="badge badge-script">00_setup.sql</span>
+          </div>
+
+          <p>Now that your workspace is connected, use Cortex Code to run the setup script and build your entire lab environment in one shot.</p>
+
+          <h3>1.1 Run the Setup Script via CoCo</h3>
+          <p>Copy and paste this prompt into Cortex Code:</p>
           <div class="code-block">
             <div class="code-header"><span>CoCo Prompt &ndash; Execute setup script</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
             <pre>Please execute the setup script from the GitHub repository we connected.
@@ -405,7 +431,7 @@ so I can confirm everything loaded correctly.</pre>
             <strong>Clarity naming conventions:</strong> The INBOUND tables use Epic's actual column names &ndash; <code>PAT_ENC_CSN_ID</code> (encounter key), <code>ENC_TYPE_C</code> (numeric type codes like 1=Inpatient, 3=Emergency), <code>RESULT_FLAG_C</code> (0=Normal, 1=High, 2=Low). Dynamic tables will decode these into readable values.
           </div>
 
-          <h3>0.5 Why Git Workspaces Matter</h3>
+          <h3>1.2 Why Git Workspaces Matter</h3>
           <table>
             <tr><th>Without Git workspaces</th><th>With Git workspaces</th></tr>
             <tr><td>SQL in local files, Slack, shared drives</td><td>SQL versioned in Git with full history</td></tr>
@@ -419,22 +445,22 @@ so I can confirm everything loaded correctly.</pre>
           </div>
 
           <div class="step-nav">
-            <span></span>
+            <button class="nav-btn nav-btn-prev">&larr; Back</button>
             <button class="nav-btn nav-btn-next">Next &rarr;</button>
           </div>
         </section>
 
-        <!-- ===================== STEP 1 ===================== -->
-        <section class="step" id="step-1">
+        <!-- ===================== STEP 2 ===================== -->
+        <section class="step" id="step-2">
           <h2>Dynamic Tables (Hands-On)</h2>
           <div class="step-meta">
-            <span class="badge badge-time">0:15 &ndash; 0:55</span>
+            <span class="badge badge-time">0:20 &ndash; 1:00</span>
             <span class="badge badge-script">02_dynamic_tables.sql</span>
           </div>
 
           <p>Dynamic tables flip ETL: you declare <strong>what the result should look like</strong>, and Snowflake handles <strong>when to refresh</strong>. No cron jobs, no orchestration, no manual MERGE scripts. This replaces what Snowforge does today.</p>
 
-          <h3>1.1 Build the CURATED layer</h3>
+          <h3>2.1 Build the CURATED layer</h3>
           <p>Run Part B in the script. Five dynamic tables transform messy Clarity sources into a clean dimensional model:</p>
           <div class="code-block">
             <div class="code-header"><span>SQL &ndash; FACT_ENCOUNTER (decodes Clarity type codes)</span><button class="copy-btn">📋 Copy</button></div>
@@ -466,7 +492,7 @@ LEFT JOIN BUH_HOL.INBOUND.CLARITY_SER s
             <tr><td>FACT_ORDER</td><td>ORDER_PROC + PAT_ENC</td><td>Decode RESULT_FLAG_C (Normal/High/Low)</td></tr>
           </table>
 
-          <h3>1.2 Build the GOLD layer</h3>
+          <h3>2.2 Build the GOLD layer</h3>
           <p>GOLD reads from CURATED (which reads INBOUND). The whole graph refreshes automatically:</p>
           <table>
             <tr><th>Gold Table</th><th>Purpose</th></tr>
@@ -482,7 +508,7 @@ SELECT * FROM BUH_HOL.GOLD.ED_THROUGHPUT ORDER BY CONTACT_DATE;
 SELECT * FROM BUH_HOL.GOLD.READMISSION_RISK ORDER BY DAYS_BETWEEN;</pre>
           </div>
 
-          <h3>1.3 Watch it refresh &ndash; the "aha moment"</h3>
+          <h3>2.3 Watch it refresh &ndash; the "aha moment"</h3>
           <p>A new patient arrives in the ED with a stroke. Insert the data (simulating what Snowlift/Snowloader would do) and watch it cascade through all layers:</p>
           <div class="code-block">
             <div class="code-header"><span>SQL &ndash; New ED patient</span><button class="copy-btn">📋 Copy</button></div>
@@ -496,7 +522,7 @@ SELECT * FROM BUH_HOL.GOLD.DEPARTMENT_DASHBOARD
   WHERE DEPARTMENT_NAME = 'Emergency Department';</pre>
           </div>
 
-          <h3>1.4 Monitor pipeline health</h3>
+          <h3>2.4 Monitor pipeline health</h3>
           <div class="code-block">
             <div class="code-header"><span>SQL &ndash; Refresh history</span><button class="copy-btn">📋 Copy</button></div>
             <pre>SELECT NAME, STATE, REFRESH_START_TIME,
@@ -520,15 +546,15 @@ ORDER BY REFRESH_START_TIME DESC LIMIT 15;</pre>
           </div>
         </section>
 
-        <!-- ===================== STEP 2 ===================== -->
-        <section class="step" id="step-2">
+        <!-- ===================== STEP 3 ===================== -->
+        <section class="step" id="step-3">
           <h2>Power BI, Iceberg &amp; Fabric</h2>
           <div class="step-meta">
-            <span class="badge badge-time">0:55 &ndash; 1:10</span>
+            <span class="badge badge-time">1:00 &ndash; 1:15</span>
             <span class="badge badge-script">03_powerbi_iceberg_fabric.sql</span>
           </div>
 
-          <h3>2.1 Three Power BI connection options</h3>
+          <h3>3.1 Three Power BI connection options</h3>
           <table>
             <tr><th>Option</th><th>How it works</th><th>SF compute cost</th><th>Best for</th></tr>
             <tr><td><strong>DirectQuery</strong></td><td>PBI sends SQL at query time</td><td>Warehouse runs during dashboard use</td><td>Operational dashboards</td></tr>
@@ -536,12 +562,12 @@ ORDER BY REFRESH_START_TIME DESC LIMIT 15;</pre>
             <tr><td><strong>Direct Lake (Fabric)</strong></td><td>SF writes Iceberg to OneLake; PBI reads Parquet</td><td>Warehouse only writes Iceberg</td><td>Minimizing SF compute for BI</td></tr>
           </table>
 
-          <h3>2.2 Fabric CU overconsumption</h3>
+          <h3>3.2 Fabric CU overconsumption</h3>
           <div class="callout callout-warn">
             <strong>Watch for this:</strong> All Fabric workloads share one Capacity Unit (CU) pool. Direct Lake reads, Dataflows, Spark, SQL endpoints &ndash; all pull from the same pool. The cheapest path: keep your pipeline in Snowflake, write only GOLD as Iceberg to OneLake, size Fabric capacity for BI read load only.
           </div>
 
-          <h3>2.3 Iceberg table (hands-on)</h3>
+          <h3>3.3 Iceberg table (hands-on)</h3>
           <p>Iceberg tables use the same SQL but store data in open Parquet format. Any Iceberg-compatible engine (Fabric, Spark, Trino) can read it.</p>
           <div class="code-block">
             <div class="code-header"><span>SQL &ndash; Query Iceberg table</span><button class="copy-btn">📋 Copy</button></div>
@@ -549,7 +575,7 @@ ORDER BY REFRESH_START_TIME DESC LIMIT 15;</pre>
 ORDER BY TOTAL_CHARGES DESC;</pre>
           </div>
 
-          <h3>2.4 When to use which table type</h3>
+          <h3>3.4 When to use which table type</h3>
           <table>
             <tr><th>Layer</th><th>Recommended</th><th>Why</th></tr>
             <tr><td>INBOUND</td><td>Snowflake default</td><td>Fast ingest, time travel, streams</td></tr>
@@ -557,7 +583,7 @@ ORDER BY TOTAL_CHARGES DESC;</pre>
             <tr><td>GOLD / Datamart</td><td>Iceberg (OneLake)</td><td>Open format, Direct Lake, no SF compute for BI</td></tr>
           </table>
 
-          <h3>2.5 Purview quick reference</h3>
+          <h3>3.5 Purview quick reference</h3>
           <table>
             <tr><th></th><th>Snowflake Tags</th><th>Purview Labels</th></tr>
             <tr><td>Applied in</td><td>Snowflake</td><td>Microsoft</td></tr>
@@ -577,15 +603,15 @@ ORDER BY TOTAL_CHARGES DESC;</pre>
           </div>
         </section>
 
-        <!-- ===================== STEP 3 ===================== -->
-        <section class="step" id="step-3">
+        <!-- ===================== STEP 4 ===================== -->
+        <section class="step" id="step-4">
           <h2>Tags, Sensitivity &amp; Governance</h2>
           <div class="step-meta">
-            <span class="badge badge-time">1:10 &ndash; 1:30</span>
+            <span class="badge badge-time">1:15 &ndash; 1:35</span>
             <span class="badge badge-script">04_tags_and_governance.sql</span>
           </div>
 
-          <h3>3.1 Where can tags be applied?</h3>
+          <h3>4.1 Where can tags be applied?</h3>
           <table>
             <tr><th>Object</th><th>Example tag</th></tr>
             <tr><td>Warehouse</td><td><code>cost_center = 'Analytics'</code></td></tr>
@@ -595,7 +621,7 @@ ORDER BY TOTAL_CHARGES DESC;</pre>
           </table>
           <p>Tags <strong>cannot</strong> be applied to rows, stages, users, or roles.</p>
 
-          <h3>3.2 Tag Clarity source columns</h3>
+          <h3>4.2 Tag Clarity source columns</h3>
           <p>Run Parts B and C. The script tags sensitive columns on <code>INBOUND.PATIENT</code> using Clarity column names:</p>
           <div class="code-block">
             <div class="code-header"><span>SQL &ndash; Apply PII tags</span><button class="copy-btn">📋 Copy</button></div>
@@ -608,7 +634,7 @@ ALTER TABLE BUH_HOL.INBOUND.PATIENT MODIFY COLUMN EMAIL_ADDRESS
 -- ... and PAT_FIRST_NAME, PAT_LAST_NAME, HOME_PHONE, ADD_LINE_1, BIRTH_DATE</pre>
           </div>
 
-          <h3>3.3 Tag-based masking</h3>
+          <h3>4.3 Tag-based masking</h3>
           <p>The key pattern: attach a masking policy to a <strong>tag</strong>, not individual columns. Every column with that tag is automatically protected.</p>
           <div class="code-block">
             <div class="code-header"><span>SQL &ndash; One policy protects all PII</span><button class="copy-btn">📋 Copy</button></div>
@@ -616,7 +642,7 @@ ALTER TABLE BUH_HOL.INBOUND.PATIENT MODIFY COLUMN EMAIL_ADDRESS
   MASKING POLICY BUH_HOL.GOVERNANCE.MASK_PII_STRING;</pre>
           </div>
 
-          <h3>3.4 Test masking across roles</h3>
+          <h3>4.4 Test masking across roles</h3>
           <div class="code-block">
             <div class="code-header"><span>SQL &ndash; POLICY_CONTEXT testing</span><button class="copy-btn">📋 Copy</button></div>
             <pre>-- ADMIN sees everything
@@ -656,11 +682,11 @@ FROM BUH_HOL.INBOUND.PATIENT LIMIT 3;</pre>
           </div>
         </section>
 
-        <!-- ===================== STEP 4 ===================== -->
-        <section class="step" id="step-4">
+        <!-- ===================== STEP 5 ===================== -->
+        <section class="step" id="step-5">
           <h2>Putting It Together</h2>
           <div class="step-meta">
-            <span class="badge badge-time">1:30 &ndash; 1:45</span>
+            <span class="badge badge-time">1:35 &ndash; 1:50</span>
             <span class="badge badge-script">05_putting_it_together.sql</span>
           </div>
 
@@ -717,11 +743,11 @@ ORDER BY LAYER;</pre>
           </div>
         </section>
 
-        <!-- ===================== STEP 5 ===================== -->
-        <section class="step" id="step-5">
+        <!-- ===================== STEP 6 ===================== -->
+        <section class="step" id="step-6">
           <h2>Recap &amp; Cleanup</h2>
           <div class="step-meta">
-            <span class="badge badge-time">1:45 &ndash; 1:50</span>
+            <span class="badge badge-time">1:50 &ndash; 2:00</span>
             <span class="badge badge-script">06_cleanup.sql</span>
           </div>
 
