@@ -28,6 +28,12 @@ header h1 {
   letter-spacing: -0.6px;
   position: relative;
 }
+header .header-logo {
+  height: 48px;
+  margin-bottom: 14px;
+  position: relative;
+  filter: brightness(0) invert(1);
+}
 header h1 span { color: #29B5E8; }
 header .tagline {
   margin-top: 10px;
