@@ -33,7 +33,7 @@ header .header-logo {
   max-width: 80%;
   margin-bottom: 18px;
   position: relative;
-  border-radius: 8px;
+  filter: brightness(0) invert(1);
 }
 header h1 span { color: #29B5E8; }
 header .tagline {
