@@ -461,8 +461,26 @@ loaded correctly.</pre>
           <p>Here's the data model you'll build &mdash; five source tables flow into a curated dimensional model, which feeds three reporting dashboards:</p>
           <p><img alt="Data model: INBOUND → CURATED → GOLD" src="assets/img/data-model.svg" style="width:100%; max-width:960px; border-radius:8px;"></p>
 
-          <h3>2.1 Build the CURATED layer</h3>
-          <p>Run Part B in the script. Five dynamic tables transform messy Clarity sources into a clean dimensional model:</p>
+          <h3>2.1 Build the pipeline via CoCo</h3>
+          <p>Copy and paste this prompt into Cortex Code:</p>
+          <div class="code-block">
+            <div class="code-header"><span>CoCo Prompt &ndash; Build dynamic tables</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
+            <pre>Open the file scripts/02_dynamic_tables.sql from the buh-hol Git workspace.
+
+Run Part B (the CURATED layer) first. It creates 5 dynamic tables:
+DIM_PATIENT, DIM_PROVIDER, FACT_ENCOUNTER, FACT_DIAGNOSIS, and FACT_ORDER.
+
+After the CURATED tables are created, run Part C (the GOLD layer) to create
+3 reporting tables: DEPARTMENT_DASHBOARD, ED_THROUGHPUT, and READMISSION_RISK.
+
+Show me a row count for all 8 dynamic tables to confirm they populated.</pre>
+          </div>
+          <div class="callout callout-info">
+            <strong>What's happening:</strong> CoCo reads the dynamic tables script from your Git workspace and creates the full INBOUND &rarr; CURATED &rarr; GOLD pipeline. All 8 tables auto-refresh on a 1-minute target lag.
+          </div>
+
+          <h3>2.2 Understand the CURATED layer</h3>
+          <p>Five dynamic tables transform messy Clarity sources into a clean dimensional model:</p>
           <div class="code-block">
             <div class="code-header"><span>SQL &ndash; FACT_ENCOUNTER (decodes Clarity type codes)</span><button class="copy-btn">📋 Copy</button></div>
             <pre>CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.CURATED.FACT_ENCOUNTER
@@ -493,7 +511,7 @@ LEFT JOIN BUH_HOL.INBOUND.CLARITY_SER s
             <tr><td>FACT_ORDER</td><td>ORDER_PROC + PAT_ENC</td><td>Decode RESULT_FLAG_C (Normal/High/Low)</td></tr>
           </table>
 
-          <h3>2.2 Build the GOLD layer</h3>
+          <h3>2.3 Understand the GOLD layer</h3>
           <p>GOLD reads from CURATED (which reads INBOUND). The whole graph refreshes automatically:</p>
           <table>
             <tr><th>Gold Table</th><th>Purpose</th></tr>
@@ -509,7 +527,7 @@ SELECT * FROM BUH_HOL.GOLD.ED_THROUGHPUT ORDER BY CONTACT_DATE;
 SELECT * FROM BUH_HOL.GOLD.READMISSION_RISK ORDER BY DAYS_BETWEEN;</pre>
           </div>
 
-          <h3>2.3 Watch it refresh &ndash; the "aha moment"</h3>
+          <h3>2.4 Watch it refresh &ndash; the "aha moment"</h3>
           <p>A new patient arrives in the ED with a stroke. Insert the data (simulating what Snowlift/Snowloader would do) and watch it cascade through all layers:</p>
           <div class="code-block">
             <div class="code-header"><span>SQL &ndash; New ED patient</span><button class="copy-btn">📋 Copy</button></div>
@@ -523,7 +541,7 @@ SELECT * FROM BUH_HOL.GOLD.DEPARTMENT_DASHBOARD
   WHERE DEPARTMENT_NAME = 'Emergency Department';</pre>
           </div>
 
-          <h3>2.4 Monitor pipeline health</h3>
+          <h3>2.5 Monitor pipeline health</h3>
           <div class="code-block">
             <div class="code-header"><span>SQL &ndash; Refresh history</span><button class="copy-btn">📋 Copy</button></div>
             <pre>SELECT NAME, STATE, REFRESH_START_TIME,
@@ -568,12 +586,16 @@ ORDER BY REFRESH_START_TIME DESC LIMIT 15;</pre>
             <strong>Watch for this:</strong> All Fabric workloads share one Capacity Unit (CU) pool. Direct Lake reads, Dataflows, Spark, SQL endpoints &ndash; all pull from the same pool. The cheapest path: keep your pipeline in Snowflake, write only GOLD as Iceberg to OneLake, size Fabric capacity for BI read load only.
           </div>
 
-          <h3>3.3 Iceberg table (hands-on)</h3>
-          <p>Iceberg tables use the same SQL but store data in open Parquet format. Any Iceberg-compatible engine (Fabric, Spark, Trino) can read it.</p>
+          <h3>3.3 Create an Iceberg table via CoCo</h3>
+          <p>Iceberg tables use the same SQL but store data in open Parquet format. Any Iceberg-compatible engine (Fabric, Spark, Trino) can read it. Copy and paste this prompt into Cortex Code:</p>
           <div class="code-block">
-            <div class="code-header"><span>SQL &ndash; Query Iceberg table</span><button class="copy-btn">📋 Copy</button></div>
-            <pre>SELECT * FROM BUH_HOL.GOLD.DEPT_DASHBOARD_ICEBERG
-ORDER BY TOTAL_CHARGES DESC;</pre>
+            <div class="code-header"><span>CoCo Prompt &ndash; Create Iceberg table</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
+            <pre>Open the file scripts/03_powerbi_iceberg_fabric.sql from the buh-hol
+Git workspace and run Part B. It creates an Iceberg table from our
+GOLD.DEPARTMENT_DASHBOARD dynamic table.
+
+After execution, query the Iceberg table and show me the results
+sorted by TOTAL_CHARGES descending.</pre>
           </div>
 
           <h3>3.4 When to use which table type</h3>
@@ -610,6 +632,30 @@ ORDER BY TOTAL_CHARGES DESC;</pre>
           <div class="step-meta">
             <span class="badge badge-time">1:15 &ndash; 1:35</span>
             <span class="badge badge-script">04_tags_and_governance.sql</span>
+          </div>
+
+          <p>Copy and paste this prompt into Cortex Code to run the full governance script:</p>
+          <div class="code-block">
+            <div class="code-header"><span>CoCo Prompt &ndash; Tags and masking</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
+            <pre>Open the file scripts/04_tags_and_governance.sql from the buh-hol
+Git workspace and run the full script. It creates governance tags,
+applies them to sensitive columns on the PATIENT table, creates
+masking policies, and attaches those policies to the tags.
+
+After execution, test the masking by running these three queries
+and showing me the results side by side:
+
+EXECUTE USING POLICY_CONTEXT(CURRENT_ROLE => 'BUH_LAB_ADMIN')
+SELECT PAT_FIRST_NAME, SSN, EMAIL_ADDRESS FROM BUH_HOL.INBOUND.PATIENT LIMIT 3;
+
+EXECUTE USING POLICY_CONTEXT(CURRENT_ROLE => 'BUH_LAB_CLINICIAN')
+SELECT PAT_FIRST_NAME, SSN, EMAIL_ADDRESS FROM BUH_HOL.INBOUND.PATIENT LIMIT 3;
+
+EXECUTE USING POLICY_CONTEXT(CURRENT_ROLE => 'BUH_LAB_ANALYST')
+SELECT PAT_FIRST_NAME, SSN, EMAIL_ADDRESS FROM BUH_HOL.INBOUND.PATIENT LIMIT 3;</pre>
+          </div>
+          <div class="callout callout-info">
+            <strong>What's happening:</strong> CoCo creates tags, applies them to PII columns, then attaches masking policies to the tags. The POLICY_CONTEXT queries let you see the same data through three different roles without switching.
           </div>
 
           <h3>4.1 Where can tags be applied?</h3>
@@ -691,6 +737,18 @@ FROM BUH_HOL.INBOUND.PATIENT LIMIT 3;</pre>
             <span class="badge badge-script">05_putting_it_together.sql</span>
           </div>
 
+          <p>Copy and paste this prompt into Cortex Code to verify everything end-to-end:</p>
+          <div class="code-block">
+            <div class="code-header"><span>CoCo Prompt &ndash; Verify pipeline</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
+            <pre>Open the file scripts/05_putting_it_together.sql from the buh-hol
+Git workspace and run the full script. It checks row counts across
+all three layers (INBOUND, CURATED, GOLD) and reviews the dynamic
+table refresh history.
+
+Show me the results as a summary table so I can confirm the full
+pipeline is working end-to-end.</pre>
+          </div>
+
           <h3>Architecture you built today</h3>
           <div class="code-block">
             <div class="code-header"><span>Architecture diagram</span></div>
@@ -764,6 +822,17 @@ ORDER BY LAYER;</pre>
           </table>
 
           <h3>Cleanup</h3>
+          <p>Copy and paste this prompt into Cortex Code to tear down all lab objects:</p>
+          <div class="code-block">
+            <div class="code-header"><span>CoCo Prompt &ndash; Cleanup</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
+            <pre>Open the file scripts/06_cleanup.sql from the buh-hol Git workspace
+and run the full script. It drops the BUH_HOL database, the three
+lab roles, and the GitHub API integration.
+
+Confirm everything was cleaned up successfully.</pre>
+          </div>
+
+          <p>Or run the cleanup SQL directly:</p>
           <div class="code-block">
             <div class="code-header"><span>SQL &ndash; 06_cleanup.sql</span><button class="copy-btn">📋 Copy</button></div>
             <pre>USE ROLE ACCOUNTADMIN;
