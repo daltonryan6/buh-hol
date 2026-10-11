@@ -42,6 +42,9 @@ USE ROLE ACCOUNTADMIN;
 
 -- DIM_PATIENT: Clean demographics from Clarity PATIENT table
 -- Note: Clarity stores names in mixed case, phones without formatting
+-- AGE is computed against a fixed reporting-period date ('2025-01-01'),
+-- NOT CURRENT_DATE(). Non-deterministic functions like CURRENT_DATE()
+-- prevent incremental refresh — a common gotcha with dynamic tables.
 -- REFRESH_MODE = INCREMENTAL: simple projection, perfect for change-only processing
 CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.CURATED.DIM_PATIENT
   TARGET_LAG = '1 minute'
@@ -54,7 +57,7 @@ SELECT
     INITCAP(PAT_FIRST_NAME)  AS FIRST_NAME,
     INITCAP(PAT_LAST_NAME)   AS LAST_NAME,
     BIRTH_DATE,
-    DATEDIFF('year', BIRTH_DATE, CURRENT_DATE()) AS AGE,
+    DATEDIFF('year', BIRTH_DATE, '2025-01-01'::DATE) AS AGE,
     SSN,
     ADD_LINE_1               AS ADDRESS,
     CITY,
@@ -360,11 +363,15 @@ ORDER BY NAME;
 --   DOWNSTREAM   = READMISSION_RISK (analytics — refresh only when queried)
 --
 -- REFRESH_MODE controls HOW data is refreshed:
---   INCREMENTAL  = process only changed rows (most CURATED tables)
+--   INCREMENTAL  = process only changed rows (most CURATED tables + READMISSION_RISK)
 --   ADAPTIVE     = incremental by default, auto-reinitializes on bulk loads
 --                   (FACT_ENCOUNTER, ED_THROUGHPUT — handles Snowlift reloads)
 --   FULL         = reprocess everything each refresh (DEPARTMENT_DASHBOARD —
 --                   predictable cost for aggregation)
+--
+-- GOTCHA: Non-deterministic functions (CURRENT_DATE(), CURRENT_TIMESTAMP())
+-- force a table to FULL refresh mode. That's why DIM_PATIENT computes AGE
+-- against a fixed reporting-period date instead of CURRENT_DATE().
 --
 -- The combination of TARGET_LAG + REFRESH_MODE gives you fine-grained
 -- control over freshness vs. cost. In production, set both explicitly.

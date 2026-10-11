@@ -552,6 +552,9 @@ table and show me a few sample rows from each.</pre>
           <div class="callout callout-warn">
             <strong>Key design decision:</strong> <code>TARGET_LAG</code> controls <em>freshness</em> (how stale can it be?). <code>REFRESH_MODE</code> controls <em>how</em> the data is refreshed (incremental change processing, full rebuild, or adaptive). In production, set both explicitly &mdash; don't rely on defaults.
           </div>
+          <div class="callout callout-warn">
+            <strong>Gotcha &mdash; non-deterministic functions:</strong> <code>CURRENT_DATE()</code>, <code>CURRENT_TIMESTAMP()</code>, and similar functions <strong>prevent incremental refresh</strong> because the output changes without any input change. That's why DIM_PATIENT computes AGE against a fixed reporting-period date (<code>'2025-01-01'</code>) instead of <code>CURRENT_DATE()</code>. If we had used <code>CURRENT_DATE()</code>, DIM_PATIENT would be forced to FULL &mdash; and that cascades: every downstream table reading from it (ED_THROUGHPUT, READMISSION_RISK) would also be forced to FULL.
+          </div>
 
           <h3>2.6 Watch it refresh &ndash; the &ldquo;aha moment&rdquo;</h3>
           <p>A new patient arrives in the ED with a stroke. Insert the data (simulating what Snowlift/Snowloader would do) and watch it cascade through all layers:</p>
