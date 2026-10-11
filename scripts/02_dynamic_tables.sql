@@ -42,8 +42,10 @@ USE ROLE ACCOUNTADMIN;
 
 -- DIM_PATIENT: Clean demographics from Clarity PATIENT table
 -- Note: Clarity stores names in mixed case, phones without formatting
+-- REFRESH_MODE = INCREMENTAL: simple projection, perfect for change-only processing
 CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.CURATED.DIM_PATIENT
   TARGET_LAG = '1 minute'
+  REFRESH_MODE = INCREMENTAL
   WAREHOUSE = COMPUTE_WH
 AS
 SELECT
@@ -66,8 +68,10 @@ SELECT
 FROM BUH_HOL.INBOUND.PATIENT;
 
 -- DIM_PROVIDER: Clean provider dimension from CLARITY_SER
+-- REFRESH_MODE = INCREMENTAL: filter + projection, low complexity
 CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.CURATED.DIM_PROVIDER
   TARGET_LAG = '1 minute'
+  REFRESH_MODE = INCREMENTAL
   WAREHOUSE = COMPUTE_WH
 AS
 SELECT
@@ -82,8 +86,12 @@ WHERE ACTIVE_STATUS = 'Y';
 
 -- FACT_ENCOUNTER: Join PAT_ENC with CLARITY_SER, decode type codes,
 -- compute length of stay. This is the core clinical fact table.
+-- REFRESH_MODE = ADAPTIVE: handles Snowlift bulk loads gracefully by
+-- auto-reinitializing when a full table reload lands, then resuming
+-- incremental processing for normal row-by-row changes.
 CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.CURATED.FACT_ENCOUNTER
   TARGET_LAG = '1 minute'
+  REFRESH_MODE = ADAPTIVE
   WAREHOUSE = COMPUTE_WH
 AS
 SELECT
@@ -117,8 +125,10 @@ FROM BUH_HOL.INBOUND.PAT_ENC e
 LEFT JOIN BUH_HOL.INBOUND.CLARITY_SER s ON e.VISIT_PROV_ID = s.PROV_ID;
 
 -- FACT_DIAGNOSIS: Join diagnosis list to encounters for context
+-- REFRESH_MODE = INCREMENTAL: straightforward join, small change volumes
 CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.CURATED.FACT_DIAGNOSIS
   TARGET_LAG = '1 minute'
+  REFRESH_MODE = INCREMENTAL
   WAREHOUSE = COMPUTE_WH
 AS
 SELECT
@@ -134,8 +144,10 @@ FROM BUH_HOL.INBOUND.HSP_ACCT_DX_LIST d
 JOIN BUH_HOL.INBOUND.PAT_ENC e ON d.PAT_ENC_CSN_ID = e.PAT_ENC_CSN_ID;
 
 -- FACT_ORDER: Lab results with abnormal flagging
+-- REFRESH_MODE = INCREMENTAL: join + CASE decode, well-suited for incremental
 CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.CURATED.FACT_ORDER
   TARGET_LAG = '1 minute'
+  REFRESH_MODE = INCREMENTAL
   WAREHOUSE = COMPUTE_WH
 AS
 SELECT
@@ -167,8 +179,11 @@ LEFT JOIN BUH_HOL.INBOUND.PAT_ENC e ON o.PAT_ENC_CSN_ID = e.PAT_ENC_CSN_ID;
 -- graph refreshes automatically when source data changes.
 
 -- DEPARTMENT_DASHBOARD: Operational metrics by department
+-- TARGET_LAG = 15 minutes: operational reporting doesn't need sub-minute freshness
+-- REFRESH_MODE = FULL: aggregation over the full dataset, predictable cost per refresh
 CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.GOLD.DEPARTMENT_DASHBOARD
-  TARGET_LAG = '1 minute'
+  TARGET_LAG = '15 minutes'
+  REFRESH_MODE = FULL
   WAREHOUSE = COMPUTE_WH
 AS
 SELECT
@@ -186,8 +201,12 @@ FROM BUH_HOL.CURATED.FACT_ENCOUNTER e
 GROUP BY e.DEPARTMENT_NAME;
 
 -- ED_THROUGHPUT: Emergency Department operations
+-- TARGET_LAG = 1 minute: real-time ED dashboard for patient flow
+-- REFRESH_MODE = ADAPTIVE: multi-table join; adaptive handles occasional
+-- bulk reloads from upstream without manual intervention
 CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.GOLD.ED_THROUGHPUT
   TARGET_LAG = '1 minute'
+  REFRESH_MODE = ADAPTIVE
   WAREHOUSE = COMPUTE_WH
 AS
 SELECT
@@ -209,8 +228,11 @@ LEFT JOIN BUH_HOL.CURATED.FACT_DIAGNOSIS d
 WHERE e.ENCOUNTER_TYPE = 'Emergency';
 
 -- READMISSION_RISK: Patients with 2+ encounters within 30 days
+-- TARGET_LAG = DOWNSTREAM: only refreshes when a downstream consumer queries it.
+-- Perfect for analytics tables that don't need continuous freshness.
 CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.GOLD.READMISSION_RISK
-  TARGET_LAG = '1 minute'
+  TARGET_LAG = DOWNSTREAM
+  REFRESH_MODE = INCREMENTAL
   WAREHOUSE = COMPUTE_WH
 AS
 SELECT
@@ -265,7 +287,7 @@ INSERT INTO BUH_HOL.INBOUND.PATIENT
   (PAT_ID,PAT_MRN_ID,PAT_FIRST_NAME,PAT_LAST_NAME,BIRTH_DATE,SSN,
    ADD_LINE_1,CITY,STATE_ABBR,ZIP,HOME_PHONE,EMAIL_ADDRESS,LANGUAGE,SEX)
 VALUES
-  ('P100016','MRN-900016','jorge','medina','1958-11-20','111-00-2222',
+  ('P200001','MRN-900001','jorge','medina','1958-11-20','111-00-2222',
    '650 Elmwood Ave','Providence','RI','02907','4015550116','jmedina@example.com','Spanish','Male');
 
 -- New ED encounter
@@ -273,7 +295,7 @@ INSERT INTO BUH_HOL.INBOUND.PAT_ENC
   (PAT_ENC_CSN_ID,PAT_ID,ENC_TYPE_C,CONTACT_DATE,HOSP_ADMSN_TIME,HOSP_DISCH_TIME,
    DEPARTMENT_ID,DEPARTMENT_NAME,VISIT_PROV_ID,ACCT_BASECLS_HA,ENC_CLOSED_YN)
 VALUES
-  ('E200026','P100016',3,'2024-11-28','2024-11-28 14:30:00','2024-11-28 20:15:00',
+  ('E200026','P200001',3,'2024-11-28','2024-11-28 14:30:00','2024-11-28 20:15:00',
    1003,'Emergency Department','PROV-003',5800.00,'Y');
 
 -- Diagnosis for the encounter
@@ -285,16 +307,16 @@ INSERT INTO BUH_HOL.INBOUND.ORDER_PROC
   (ORDER_PROC_ID,PAT_ENC_CSN_ID,PAT_ID,PROC_CODE,DESCRIPTION,
    ORD_VALUE,RESULT_UNIT,REFERENCE_LOW,REFERENCE_HIGH,RESULT_FLAG_C,RESULT_DATE)
 VALUES
-  ('OP029','E200026','P100016','TROP','Troponin I',
+  ('OP029','E200026','P200001','TROP','Troponin I',
    0.15,'ng/mL',0.00,0.04,1,'2024-11-28 15:00:00');
 
 -- *** Wait ~1 minute for dynamic tables to refresh ***
 
 -- Check the CURATED layer - new patient should appear
-SELECT * FROM BUH_HOL.CURATED.DIM_PATIENT WHERE PAT_ID = 'P100016';
+SELECT * FROM BUH_HOL.CURATED.DIM_PATIENT WHERE PAT_ID = 'P200001';
 
 -- Check GOLD - the ED throughput dashboard should include the new visit
-SELECT * FROM BUH_HOL.GOLD.ED_THROUGHPUT WHERE PAT_ID = 'P100016';
+SELECT * FROM BUH_HOL.GOLD.ED_THROUGHPUT WHERE PAT_ID = 'P200001';
 
 -- Check the department dashboard - ED numbers should have increased
 SELECT * FROM BUH_HOL.GOLD.DEPARTMENT_DASHBOARD
@@ -328,21 +350,28 @@ ORDER BY NAME;
 
 
 -- ============================================================
--- PART G: Discussion - TARGET_LAG for your environment
+-- PART G: Discussion - design choices in this pipeline
 -- ============================================================
 
--- TARGET_LAG is the key design decision. It controls freshness,
--- not schedule. Snowflake decides WHEN to refresh.
+-- TARGET_LAG controls freshness, not schedule. Snowflake decides
+-- WHEN to refresh. We used three different settings:
+--   '1 minute'   = CURATED layer + ED_THROUGHPUT (real-time clinical)
+--   '15 minutes' = DEPARTMENT_DASHBOARD (operational, doesn't need sub-minute)
+--   DOWNSTREAM   = READMISSION_RISK (analytics — refresh only when queried)
 --
--- For BUH, consider:
---   '1 minute'   = ED throughput, real-time clinical dashboards
---   '15 minutes' = operational reporting (department dashboard)
---   '1 hour'     = standard analytics and research queries
---   DOWNSTREAM   = only refresh when a downstream consumer needs it
+-- REFRESH_MODE controls HOW data is refreshed:
+--   INCREMENTAL  = process only changed rows (most CURATED tables)
+--   ADAPTIVE     = incremental by default, auto-reinitializes on bulk loads
+--                   (FACT_ENCOUNTER, ED_THROUGHPUT — handles Snowlift reloads)
+--   FULL         = reprocess everything each refresh (DEPARTMENT_DASHBOARD —
+--                   predictable cost for aggregation)
+--
+-- The combination of TARGET_LAG + REFRESH_MODE gives you fine-grained
+-- control over freshness vs. cost. In production, set both explicitly.
 --
 -- Louis reported: Dynamic Tables used about the same credits as
 -- the existing ETL but saved significant engineering time. The
--- value is not in cheaper compute - it is in the orchestration,
+-- value is not in cheaper compute — it is in the orchestration,
 -- monitoring, and error-handling code you no longer need to maintain.
 
 -- ============================================================
@@ -354,7 +383,7 @@ ORDER BY NAME;
 --     FACT_ENCOUNTER, FACT_DIAGNOSIS, FACT_ORDER)
 --   - 3 dynamic tables in GOLD (DEPARTMENT_DASHBOARD,
 --     ED_THROUGHPUT, READMISSION_RISK)
---   - New patient P100016 (Jorge Medina) appearing in all layers
+--   - New patient P200001 (Jorge Medina) appearing in all layers
 --   - ED throughput now includes the new visit
 --   - Refresh history showing successful runs
 
