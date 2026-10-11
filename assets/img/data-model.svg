@@ -1,0 +1,156 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" font-family="'Segoe UI',system-ui,-apple-system,sans-serif">
+  <defs>
+    <linearGradient id="inbound" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+    <linearGradient id="curated" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.15"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 3.5 L 0 7 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="960" height="520" rx="12" fill="#0f172a"/>
+
+  <!-- Layer labels -->
+  <text x="110" y="38" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="600" letter-spacing="1.5">INBOUND</text>
+  <text x="110" y="52" text-anchor="middle" fill="#64748b" font-size="9" letter-spacing="0.5">Epic Clarity Sources</text>
+
+  <text x="440" y="38" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="600" letter-spacing="1.5">CURATED</text>
+  <text x="440" y="52" text-anchor="middle" fill="#3b82f6" font-size="9" letter-spacing="0.5">Dynamic Tables</text>
+
+  <text x="800" y="38" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="600" letter-spacing="1.5">GOLD</text>
+  <text x="800" y="52" text-anchor="middle" fill="#d97706" font-size="9" letter-spacing="0.5">Reporting Dashboards</text>
+
+  <!-- ═══════════ INBOUND BOXES ═══════════ -->
+  <g filter="url(#shadow)">
+    <rect x="20" y="80" width="180" height="44" rx="6" fill="url(#inbound)"/>
+    <text x="110" y="100" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">PATIENT</text>
+    <text x="110" y="114" text-anchor="middle" fill="#cbd5e1" font-size="9">100 rows</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="20" y="148" width="180" height="44" rx="6" fill="url(#inbound)"/>
+    <text x="110" y="168" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">PAT_ENC</text>
+    <text x="110" y="182" text-anchor="middle" fill="#cbd5e1" font-size="9">7,500 encounters</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="20" y="216" width="180" height="44" rx="6" fill="url(#inbound)"/>
+    <text x="110" y="236" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">CLARITY_SER</text>
+    <text x="110" y="250" text-anchor="middle" fill="#cbd5e1" font-size="9">20 providers</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="20" y="284" width="180" height="44" rx="6" fill="url(#inbound)"/>
+    <text x="110" y="304" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">ORDER_PROC</text>
+    <text x="110" y="318" text-anchor="middle" fill="#cbd5e1" font-size="9">75,000 lab orders</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="20" y="352" width="180" height="44" rx="6" fill="url(#inbound)"/>
+    <text x="110" y="372" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">HSP_ACCT_DX_LIST</text>
+    <text x="110" y="386" text-anchor="middle" fill="#cbd5e1" font-size="9">22,500 diagnoses</text>
+  </g>
+
+  <!-- ═══════════ CURATED BOXES ═══════════ -->
+  <g filter="url(#shadow)">
+    <rect x="350" y="80" width="180" height="44" rx="6" fill="url(#curated)"/>
+    <text x="440" y="100" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">DIM_PATIENT</text>
+    <text x="440" y="114" text-anchor="middle" fill="#bfdbfe" font-size="9">Patient demographics</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="350" y="148" width="180" height="44" rx="6" fill="url(#curated)"/>
+    <text x="440" y="168" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">DIM_PROVIDER</text>
+    <text x="440" y="182" text-anchor="middle" fill="#bfdbfe" font-size="9">Provider directory</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="350" y="216" width="180" height="44" rx="6" fill="url(#curated)"/>
+    <text x="440" y="236" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">FACT_ENCOUNTER</text>
+    <text x="440" y="250" text-anchor="middle" fill="#bfdbfe" font-size="9">Visit details + provider</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="350" y="284" width="180" height="44" rx="6" fill="url(#curated)"/>
+    <text x="440" y="304" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">FACT_ORDER</text>
+    <text x="440" y="318" text-anchor="middle" fill="#bfdbfe" font-size="9">Lab orders + encounter</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="350" y="352" width="180" height="44" rx="6" fill="url(#curated)"/>
+    <text x="440" y="372" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">FACT_DIAGNOSIS</text>
+    <text x="440" y="386" text-anchor="middle" fill="#bfdbfe" font-size="9">Dx codes + encounter</text>
+  </g>
+
+  <!-- ═══════════ GOLD BOXES ═══════════ -->
+  <g filter="url(#shadow)">
+    <rect x="690" y="116" width="250" height="54" rx="6" fill="url(#gold)"/>
+    <text x="815" y="139" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">DEPARTMENT_DASHBOARD</text>
+    <text x="815" y="155" text-anchor="middle" fill="#fde68a" font-size="9">Volumes, charges, LOS by dept</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="690" y="210" width="250" height="54" rx="6" fill="url(#gold)"/>
+    <text x="815" y="233" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">ED_THROUGHPUT</text>
+    <text x="815" y="249" text-anchor="middle" fill="#fde68a" font-size="9">ED visits, wait times, Dx detail</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="690" y="304" width="250" height="54" rx="6" fill="url(#gold)"/>
+    <text x="815" y="327" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">READMISSION_RISK</text>
+    <text x="815" y="343" text-anchor="middle" fill="#fde68a" font-size="9">30-day readmission flags</text>
+  </g>
+
+  <!-- ═══════════ ARROWS: INBOUND → CURATED ═══════════ -->
+  <!-- PATIENT → DIM_PATIENT -->
+  <line x1="200" y1="102" x2="348" y2="102" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
+
+  <!-- CLARITY_SER → DIM_PROVIDER -->
+  <line x1="200" y1="238" x2="348" y2="170" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
+
+  <!-- PAT_ENC → FACT_ENCOUNTER -->
+  <line x1="200" y1="170" x2="348" y2="232" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
+  <!-- CLARITY_SER → FACT_ENCOUNTER -->
+  <line x1="200" y1="244" x2="348" y2="244" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
+
+  <!-- ORDER_PROC → FACT_ORDER -->
+  <line x1="200" y1="306" x2="348" y2="306" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
+  <!-- PAT_ENC → FACT_ORDER -->
+  <line x1="200" y1="180" x2="348" y2="296" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
+
+  <!-- HSP_ACCT_DX_LIST → FACT_DIAGNOSIS -->
+  <line x1="200" y1="374" x2="348" y2="374" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
+  <!-- PAT_ENC → FACT_DIAGNOSIS -->
+  <line x1="200" y1="186" x2="348" y2="364" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
+
+  <!-- ═══════════ ARROWS: CURATED → GOLD ═══════════ -->
+  <!-- FACT_ENCOUNTER → DEPARTMENT_DASHBOARD -->
+  <line x1="530" y1="238" x2="688" y2="143" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.5"/>
+
+  <!-- FACT_ENCOUNTER → ED_THROUGHPUT -->
+  <line x1="530" y1="238" x2="688" y2="231" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.5"/>
+  <!-- DIM_PATIENT → ED_THROUGHPUT -->
+  <line x1="530" y1="102" x2="688" y2="225" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.5"/>
+  <!-- FACT_DIAGNOSIS → ED_THROUGHPUT -->
+  <line x1="530" y1="374" x2="688" y2="243" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.5"/>
+
+  <!-- FACT_ENCOUNTER → READMISSION_RISK (self-join) -->
+  <line x1="530" y1="244" x2="688" y2="325" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.5"/>
+  <!-- DIM_PATIENT → READMISSION_RISK -->
+  <line x1="530" y1="108" x2="688" y2="319" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.5"/>
+
+  <!-- ═══════════ LEGEND ═══════════ -->
+  <rect x="20" y="430" width="920" height="70" rx="8" fill="#1e293b" opacity="0.6"/>
+  <text x="40" y="456" fill="#94a3b8" font-size="10" font-weight="600" letter-spacing="1">HOW TO READ THIS DIAGRAM</text>
+  <rect x="40" y="468" width="12" height="12" rx="2" fill="url(#inbound)"/>
+  <text x="58" y="479" fill="#cbd5e1" font-size="10">Source tables (loaded by setup script)</text>
+  <rect x="300" y="468" width="12" height="12" rx="2" fill="url(#curated)"/>
+  <text x="318" y="479" fill="#bfdbfe" font-size="10">Curated dynamic tables (auto-refresh)</text>
+  <rect x="600" y="468" width="12" height="12" rx="2" fill="url(#gold)"/>
+  <text x="618" y="479" fill="#fde68a" font-size="10">Gold reporting dashboards (auto-refresh)</text>
+  <line x1="40" y1="492" x2="70" y2="492" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
+  <text x="78" y="496" fill="#94a3b8" font-size="10">Arrows show data flow &amp; join dependencies</text>
+</svg>

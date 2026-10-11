@@ -458,6 +458,9 @@ loaded correctly.</pre>
 
           <p>Dynamic tables flip ETL: you declare <strong>what the result should look like</strong>, and Snowflake handles <strong>when to refresh</strong>. No cron jobs, no orchestration, no manual MERGE scripts. This replaces what Snowforge does today.</p>
 
+          <p>Here's the data model you'll build &mdash; five source tables flow into a curated dimensional model, which feeds three reporting dashboards:</p>
+          <p><img alt="Data model: INBOUND → CURATED → GOLD" src="assets/img/data-model.svg" style="width:100%; max-width:960px; border-radius:8px;"></p>
+
           <h3>2.1 Build the CURATED layer</h3>
           <p>Run Part B in the script. Five dynamic tables transform messy Clarity sources into a clean dimensional model:</p>
           <div class="code-block">
