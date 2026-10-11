@@ -552,8 +552,8 @@ table and show me a few sample rows from each.</pre>
           <div class="callout callout-warn">
             <strong>Key design decision:</strong> <code>TARGET_LAG</code> controls <em>freshness</em> (how stale can it be?). <code>REFRESH_MODE</code> controls <em>how</em> the data is refreshed (incremental change processing, full rebuild, or adaptive). In production, set both explicitly &mdash; don't rely on defaults.
           </div>
-          <div class="callout callout-warn">
-            <strong>Gotcha &mdash; non-deterministic functions:</strong> <code>CURRENT_DATE()</code>, <code>CURRENT_TIMESTAMP()</code>, and similar functions <strong>prevent incremental refresh</strong> because the output changes without any input change. That's why DIM_PATIENT computes AGE against a fixed reporting-period date (<code>'2025-01-01'</code>) instead of <code>CURRENT_DATE()</code>. If we had used <code>CURRENT_DATE()</code>, DIM_PATIENT would be forced to FULL &mdash; and that cascades: every downstream table reading from it (ED_THROUGHPUT, READMISSION_RISK) would also be forced to FULL.
+          <div class="callout callout-info">
+            <strong>REFRESH_MODE best practices:</strong> Use <strong>INCREMENTAL</strong> for simple projections, filters, and joins &mdash; it processes only changed rows and is the most cost-efficient. Use <strong>ADAPTIVE</strong> when upstream tables may receive bulk reloads (e.g., from Snowlift or INSERT OVERWRITE) &mdash; it auto-reinitializes then resumes incremental. Use <strong>FULL</strong> for heavy aggregations where a predictable full rebuild is simpler than tracking changes. Avoid non-deterministic functions like <code>CURRENT_DATE()</code> in dynamic table definitions &mdash; they prevent incremental refresh. Always set <code>REFRESH_MODE</code> explicitly; don't rely on <code>AUTO</code> in production.
           </div>
 
           <h3>2.6 Watch it refresh &ndash; the &ldquo;aha moment&rdquo;</h3>
