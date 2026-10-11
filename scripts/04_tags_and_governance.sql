@@ -24,7 +24,8 @@ USE ROLE ACCOUNTADMIN;
 --   Tables      -> contains_phi = 'Yes'
 --   Columns     -> pii_type    = 'SSN'
 --
--- Tags CANNOT be applied to rows, stages, users, or roles.
+-- Tags CANNOT be applied to individual rows.
+-- Tags CAN be applied to users, roles, stages, warehouses, and many other objects.
 
 -- ============================================================
 -- PART B: Create and apply tags
