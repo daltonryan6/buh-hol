@@ -245,22 +245,73 @@ WITH dept_info AS (
 enc_raw AS (
     SELECT
         ROW_NUMBER() OVER (ORDER BY SEQ4()) AS rn,
-        -- Encounter type: weighted toward outpatient (2) -- ~50% outpatient, ~15% inpatient, ~25% ED, ~10% observation
-        CASE
-            WHEN MOD(SEQ4() * 7 + 3, 20) < 3  THEN 1   -- Inpatient
-            WHEN MOD(SEQ4() * 7 + 3, 20) < 8  THEN 3   -- Emergency
-            WHEN MOD(SEQ4() * 7 + 3, 20) < 10 THEN 4   -- Observation
-            ELSE 2                                        -- Outpatient
-        END AS enc_type,
         -- Spread across 5 years: 2020-01-01 to 2024-11-30
         DATEADD('minute', -(SEQ4() * 35), '2024-11-30 23:59:00'::TIMESTAMP_NTZ) AS admit_ts,
         -- Patient assignment: cycle through 100 patients
         'P' || LPAD((100001 + MOD(SEQ4(), 100))::VARCHAR, 6, '0') AS pat_id,
         -- Provider assignment: cycle through 20 providers
         'PROV-' || LPAD((1 + MOD(SEQ4() * 3, 20))::VARCHAR, 3, '0') AS prov_id,
-        -- Department: cycle through 15 departments
-        1 + MOD(SEQ4() * 11, 15) AS dept_idx
+        -- Hash-derived values for weighted distribution (deterministic pseudo-random 0-99)
+        ABS(MOD(HASH(SEQ4() * 7 + 13), 100))  AS dept_pct,
+        ABS(MOD(HASH(SEQ4() * 31 + 97), 100)) AS type_pct,
+        ABS(MOD(HASH(SEQ4() * 53 + 41), 100)) AS var_pct
     FROM TABLE(GENERATOR(ROWCOUNT => 7500))
+),
+enc_assigned AS (
+    SELECT r.*,
+        -- Weighted department volumes (realistic hospital distribution)
+        CASE
+            WHEN dept_pct <  18 THEN 1003  -- Emergency Department  18%
+            WHEN dept_pct <  30 THEN 1002  -- Primary Care          12%
+            WHEN dept_pct <  39 THEN 1001  -- Cardiology             9%
+            WHEN dept_pct <  47 THEN 1013  -- General Surgery        8%
+            WHEN dept_pct <  54 THEN 1005  -- OB/GYN                 7%
+            WHEN dept_pct <  61 THEN 1015  -- Infectious Disease     7%
+            WHEN dept_pct <  67 THEN 1012  -- Gastroenterology       6%
+            WHEN dept_pct <  73 THEN 1006  -- Orthopedics            6%
+            WHEN dept_pct <  78 THEN 1010  -- Pulmonology            5%
+            WHEN dept_pct <  83 THEN 1009  -- Neurology              5%
+            WHEN dept_pct <  87 THEN 1004  -- Oncology               4%
+            WHEN dept_pct <  91 THEN 1008  -- Nephrology             4%
+            WHEN dept_pct <  95 THEN 1007  -- Behavioral Health      4%
+            WHEN dept_pct <  98 THEN 1011  -- Endocrinology          3%
+            ELSE                    1014   -- Rheumatology           2%
+        END AS dept_id_val,
+        -- Encounter type depends on department (realistic clinical mix)
+        -- 1=Inpatient, 2=Outpatient, 3=Emergency, 4=Observation
+        CASE
+            WHEN dept_pct < 18 THEN  -- Emergency Department: 70% ED, 15% obs, 10% admit, 5% outpt follow-up
+                CASE WHEN type_pct < 70 THEN 3 WHEN type_pct < 85 THEN 4 WHEN type_pct < 95 THEN 1 ELSE 2 END
+            WHEN dept_pct < 30 THEN  -- Primary Care: 90% outpatient, 5% obs, 5% inpatient
+                CASE WHEN type_pct < 90 THEN 2 WHEN type_pct < 95 THEN 4 ELSE 1 END
+            WHEN dept_pct < 39 THEN  -- Cardiology: 30% inpt, 15% ED, 15% obs, 40% outpt
+                CASE WHEN type_pct < 30 THEN 1 WHEN type_pct < 45 THEN 3 WHEN type_pct < 60 THEN 4 ELSE 2 END
+            WHEN dept_pct < 47 THEN  -- General Surgery: 55% inpatient, 10% obs, 35% outpt
+                CASE WHEN type_pct < 55 THEN 1 WHEN type_pct < 65 THEN 4 ELSE 2 END
+            WHEN dept_pct < 54 THEN  -- OB/GYN: 40% inpatient (deliveries), 10% ED, 50% outpt
+                CASE WHEN type_pct < 40 THEN 1 WHEN type_pct < 50 THEN 3 ELSE 2 END
+            WHEN dept_pct < 61 THEN  -- Infectious Disease: 40% inpt, 15% ED, 15% obs, 30% outpt
+                CASE WHEN type_pct < 40 THEN 1 WHEN type_pct < 55 THEN 3 WHEN type_pct < 70 THEN 4 ELSE 2 END
+            WHEN dept_pct < 67 THEN  -- Gastroenterology: 25% inpt, 15% ED, 15% obs, 45% outpt
+                CASE WHEN type_pct < 25 THEN 1 WHEN type_pct < 40 THEN 3 WHEN type_pct < 55 THEN 4 ELSE 2 END
+            WHEN dept_pct < 73 THEN  -- Orthopedics: 45% inpatient (surgery), 10% ED, 45% outpt
+                CASE WHEN type_pct < 45 THEN 1 WHEN type_pct < 55 THEN 3 ELSE 2 END
+            WHEN dept_pct < 78 THEN  -- Pulmonology: 35% inpt, 15% ED, 20% obs, 30% outpt
+                CASE WHEN type_pct < 35 THEN 1 WHEN type_pct < 50 THEN 3 WHEN type_pct < 70 THEN 4 ELSE 2 END
+            WHEN dept_pct < 83 THEN  -- Neurology: 25% inpt, 20% ED (stroke), 15% obs, 40% outpt
+                CASE WHEN type_pct < 25 THEN 1 WHEN type_pct < 45 THEN 3 WHEN type_pct < 60 THEN 4 ELSE 2 END
+            WHEN dept_pct < 87 THEN  -- Oncology: 45% inpt (chemo), 10% obs, 45% outpt
+                CASE WHEN type_pct < 45 THEN 1 WHEN type_pct < 55 THEN 4 ELSE 2 END
+            WHEN dept_pct < 91 THEN  -- Nephrology: 35% inpt, 10% ED, 15% obs, 40% outpt
+                CASE WHEN type_pct < 35 THEN 1 WHEN type_pct < 45 THEN 3 WHEN type_pct < 60 THEN 4 ELSE 2 END
+            WHEN dept_pct < 95 THEN  -- Behavioral Health: 50% inpatient, 15% obs, 35% outpt
+                CASE WHEN type_pct < 50 THEN 1 WHEN type_pct < 65 THEN 4 ELSE 2 END
+            WHEN dept_pct < 98 THEN  -- Endocrinology: 10% inpt, 5% obs, 85% outpt
+                CASE WHEN type_pct < 10 THEN 1 WHEN type_pct < 15 THEN 4 ELSE 2 END
+            ELSE                      -- Rheumatology: 8% inpt, 4% obs, 88% outpt
+                CASE WHEN type_pct < 8 THEN 1 WHEN type_pct < 12 THEN 4 ELSE 2 END
+        END AS enc_type
+    FROM enc_raw r
 )
 SELECT
     'E' || LPAD(r.rn::VARCHAR, 7, '0')                     AS PAT_ENC_CSN_ID,
@@ -269,23 +320,23 @@ SELECT
     r.admit_ts::DATE                                        AS CONTACT_DATE,
     r.admit_ts                                              AS HOSP_ADMSN_TIME,
     CASE
-        WHEN r.enc_type = 1 THEN DATEADD('hour', 48 + MOD(r.rn * 7, 120), r.admit_ts)  -- Inpatient: 2-7 days
-        WHEN r.enc_type = 3 THEN DATEADD('hour', 2 + MOD(r.rn * 3, 10), r.admit_ts)    -- ED: 2-12 hours
-        WHEN r.enc_type = 4 THEN DATEADD('hour', 12 + MOD(r.rn * 5, 36), r.admit_ts)   -- Observation: 12-48 hrs
-        ELSE NULL                                                                         -- Outpatient: no discharge
+        WHEN r.enc_type = 1 THEN DATEADD('hour', 24 + (r.var_pct * 2.4)::INT, r.admit_ts)  -- Inpatient: 1-11 days
+        WHEN r.enc_type = 3 THEN DATEADD('minute', 45 + (r.var_pct * 6.5)::INT, r.admit_ts) -- ED: 45 min - 11.5 hrs
+        WHEN r.enc_type = 4 THEN DATEADD('hour', 8 + (r.var_pct * 0.4)::INT, r.admit_ts)   -- Observation: 8-48 hrs
+        ELSE NULL                                                                             -- Outpatient: no discharge
     END                                                     AS HOSP_DISCH_TIME,
     d.dept_id                                               AS DEPARTMENT_ID,
     d.dept_name                                             AS DEPARTMENT_NAME,
     r.prov_id                                               AS VISIT_PROV_ID,
     CASE
-        WHEN r.enc_type = 1 THEN ROUND(20000 + MOD(r.rn * 137, 60000), 2)   -- Inpatient: $20K-$80K
-        WHEN r.enc_type = 3 THEN ROUND(1000 + MOD(r.rn * 89, 9000), 2)      -- ED: $1K-$10K
-        WHEN r.enc_type = 4 THEN ROUND(5000 + MOD(r.rn * 113, 15000), 2)    -- Observation: $5K-$20K
-        ELSE ROUND(150 + MOD(r.rn * 53, 650), 2)                             -- Outpatient: $150-$800
+        WHEN r.enc_type = 1 THEN ROUND(15000 + (r.var_pct * 850) + (r.type_pct * 200), 2)  -- Inpatient: $15K-$120K
+        WHEN r.enc_type = 3 THEN ROUND(800 + (r.var_pct * 120) + (r.type_pct * 30), 2)     -- ED: $800-$15K
+        WHEN r.enc_type = 4 THEN ROUND(3000 + (r.var_pct * 170) + (r.type_pct * 50), 2)    -- Obs: $3K-$25K
+        ELSE ROUND(100 + (r.var_pct * 8) + (r.type_pct * 3), 2)                             -- Outpatient: $100-$1.1K
     END                                                     AS ACCT_BASECLS_HA,
     'Y'                                                     AS ENC_CLOSED_YN
-FROM enc_raw r
-JOIN dept_info d ON d.dept_id = (1000 + r.dept_idx);
+FROM enc_assigned r
+JOIN dept_info d ON d.dept_id = r.dept_id_val;
 
 -- -----------------------------------------------
 -- 3c. CLARITY_SER - Epic provider (service employee)
