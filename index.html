@@ -13,7 +13,7 @@
     <button class="theme-toggle">🌙</button>
     <h1>Snowflake for <span>Brown University Health</span></h1>
     <p class="tagline">Git Workspaces, Dynamic Tables, Power BI / Iceberg, and Governance</p>
-    <div class="pill">⏱ 120 minutes &middot; Hands-On Lab</div>
+    <div class="pill">⏱ 130 minutes &middot; Hands-On Lab</div>
   </header>
 
   <!-- ========== INFO BAR ========== -->
@@ -182,7 +182,7 @@
     <!-- Slide 3: What you'll build -->
     <div class="deck-slide" data-deck-slide="3">
       <div class="deck-eyebrow">Today's mission</div>
-      <h2 class="deck-h2">What you'll build in <span>120 minutes</span></h2>
+      <h2 class="deck-h2">What you'll build in <span>130 minutes</span></h2>
       <p class="deck-subtitle">Using Epic Clarity data, you'll build a complete data engineering pipeline &mdash; from raw extracts to governed analytics.</p>
       <div style="display:grid; grid-template-columns:1fr auto 1fr auto 1fr; align-items:center; gap:0; max-width:780px; margin:0 auto;">
         <div style="text-align:center; display:flex; flex-direction:column; align-items:center;">
@@ -242,7 +242,7 @@
           <div class="fc-icon">⚡</div>
           <div class="fc-num fc-num-2">Step 2</div>
           <div class="fc-title">Dynamic Tables</div>
-          <div class="fc-time">40 min</div>
+          <div class="fc-time">45 min</div>
         </div>
         <div class="flow-card" data-step="3">
           <div class="fc-icon">📊</div>
@@ -287,7 +287,7 @@
         </div>
         <div class="nav-item" data-step="2">
           <div class="nav-num fc-num-2">2</div>
-          <div><div class="nav-title">Dynamic Tables</div><div class="nav-time">40 min</div></div>
+          <div><div class="nav-title">Dynamic Tables</div><div class="nav-time">45 min</div></div>
         </div>
         <div class="nav-item" data-step="3">
           <div class="nav-num fc-num-3">3</div>
@@ -378,6 +378,11 @@ so I can use it as a file source during this lab.
           </blockquote>
           <p><img alt="Workspace file explorer" src="assets/img/workspace-files.png"></p>
 
+          <div class="checkpoint">
+            <h4>Checkpoint</h4>
+            <p>CoCo panel open, GitHub repo connected (API integration + Git repo object created), workspace shows 6 SQL files in the scripts/ folder.</p>
+          </div>
+
           <div class="step-nav">
             <span></span>
             <button class="nav-btn nav-btn-next">Next &rarr;</button>
@@ -442,6 +447,11 @@ loaded correctly.</pre>
             <strong>For your Snowforge workflow:</strong> Git workspaces give you the version control layer. Combined with dynamic tables (next step), you can replace scheduled transformation scripts with declarative SQL that auto-refreshes.
           </div>
 
+          <div class="checkpoint">
+            <h4>Checkpoint</h4>
+            <p>BUH_HOL database with 4 schemas (INBOUND, CURATED, GOLD, GOVERNANCE). Five INBOUND tables: PATIENT (100), PAT_ENC (7,500), CLARITY_SER (20), ORDER_PROC (75,000), HSP_ACCT_DX_LIST (22,500).</p>
+          </div>
+
           <div class="step-nav">
             <button class="nav-btn nav-btn-prev">&larr; Back</button>
             <button class="nav-btn nav-btn-next">Next &rarr;</button>
@@ -452,7 +462,7 @@ loaded correctly.</pre>
         <section class="step" id="step-2">
           <h2>Dynamic Tables (Hands-On)</h2>
           <div class="step-meta">
-            <span class="badge badge-time">0:20 &ndash; 1:00</span>
+            <span class="badge badge-time">0:20 &ndash; 1:05</span>
             <span class="badge badge-script">02_dynamic_tables.sql</span>
           </div>
 
@@ -583,9 +593,34 @@ ORDER BY REFRESH_START_TIME DESC LIMIT 15;</pre>
             <strong>TARGET_LAG guidance:</strong> 1 minute = ED throughput / real-time clinical. 15 minutes = operational reporting. 1 hour = standard analytics. DOWNSTREAM = refresh only when needed. Louis reported: DTs used similar credits to the existing ETL but saved significant engineering time &ndash; the value is in the orchestration code you no longer maintain.
           </div>
 
+          <h3>2.8 Streams + Tasks &mdash; event-driven complement</h3>
+          <p>Dynamic tables are <strong>declarative</strong> &mdash; you define the result, Snowflake handles refresh. But some workflows need <strong>imperative</strong> event-driven logic: audit logging, notifications, triggering external systems. That&rsquo;s where Streams + Tasks come in.</p>
+          <p>A <strong>Stream</strong> captures row-level changes (inserts, updates, deletes) on a table. A <strong>Task</strong> runs SQL on a schedule &mdash; or only when a stream has data. Together they give you CDC-triggered side effects.</p>
+          <div class="code-block">
+            <div class="code-header"><span>CoCo Prompt &ndash; Streams + Tasks audit log</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
+            <pre>Run Part G of scripts/02_dynamic_tables.sql — the Streams + Tasks section.
+
+It creates a STREAM on INBOUND.PATIENT that captures changes, an audit log
+table in the GOVERNANCE schema, and a TASK that runs every minute to log
+new patient arrivals.
+
+After everything is created, show me the stream and task status.
+Then check the audit log — Jorge Medina's insert from the aha moment
+should appear there. If it hasn't arrived yet, wait a minute and check again.</pre>
+          </div>
+          <div class="callout callout-info">
+            <strong>What&rsquo;s happening:</strong> The stream on INBOUND.PATIENT captured the Jorge Medina insert from Step 2.6. The task's <code>WHEN SYSTEM$STREAM_HAS_DATA()</code> clause detected the change and logged it to the audit table &mdash; automatically, with no scheduling code. In production, streams + tasks handle audit trails, compliance logging, and triggering Snowlift reloads.
+          </div>
+
+          <table>
+            <tr><th>Pattern</th><th>How it works</th><th>Best for</th></tr>
+            <tr><td>Dynamic Tables</td><td>Declare the result &mdash; Snowflake figures out when and how to refresh</td><td>Transformations, dimensional models, aggregations</td></tr>
+            <tr><td>Streams + Tasks</td><td>Capture changes, trigger actions on a schedule or when data arrives</td><td>Audit logs, notifications, complex CDC with side effects</td></tr>
+          </table>
+
           <div class="checkpoint">
             <h4>Checkpoint</h4>
-            <p>8 dynamic tables (5 CURATED + 3 GOLD). New patient P200001 (Jorge Medina) appears in all layers after refresh. Refresh history shows successful runs.</p>
+            <p>8 dynamic tables (5 CURATED + 3 GOLD). New patient P200001 (Jorge Medina) appears in all layers after refresh. Stream + Task captured the insert into the audit log. Refresh history shows successful runs.</p>
           </div>
 
           <div class="step-nav">
@@ -598,7 +633,7 @@ ORDER BY REFRESH_START_TIME DESC LIMIT 15;</pre>
         <section class="step" id="step-3">
           <h2>Power BI, Iceberg &amp; Visualization</h2>
           <div class="step-meta">
-            <span class="badge badge-time">1:00 &ndash; 1:15</span>
+            <span class="badge badge-time">1:05 &ndash; 1:25</span>
             <span class="badge badge-script">03_powerbi_iceberg_fabric.sql</span>
           </div>
 
@@ -682,7 +717,7 @@ visually clean with st.divider() between sections.</pre>
         <section class="step" id="step-4">
           <h2>Tags, Sensitivity &amp; Governance</h2>
           <div class="step-meta">
-            <span class="badge badge-time">1:15 &ndash; 1:35</span>
+            <span class="badge badge-time">1:25 &ndash; 1:45</span>
             <span class="badge badge-script">04_tags_and_governance.sql</span>
           </div>
 
@@ -785,7 +820,7 @@ FROM BUH_HOL.INBOUND.PATIENT LIMIT 3;</pre>
         <section class="step" id="step-5">
           <h2>Putting It Together</h2>
           <div class="step-meta">
-            <span class="badge badge-time">1:35 &ndash; 1:50</span>
+            <span class="badge badge-time">1:45 &ndash; 2:00</span>
             <span class="badge badge-script">05_putting_it_together.sql</span>
           </div>
 
@@ -802,27 +837,32 @@ pipeline is working end-to-end.</pre>
           </div>
 
           <h3>Architecture you built today</h3>
-          <div class="code-block">
-            <div class="code-header"><span>Architecture diagram</span></div>
-            <pre>[Epic Clarity SQL Server]
-       |
-       | Snowlift / Snowloader (simulated by 00_setup.sql)
-       v
-INBOUND (Clarity tables: PATIENT, PAT_ENC, CLARITY_SER, ORDER_PROC, HSP_ACCT_DX_LIST)
-       |
-       | Dynamic Tables auto-refresh
-       v
-CURATED (DIM_PATIENT, DIM_PROVIDER, FACT_ENCOUNTER, FACT_DIAGNOSIS, FACT_ORDER)
-       |
-       | Dynamic Tables auto-refresh
-       v
-GOLD (DEPARTMENT_DASHBOARD, ED_THROUGHPUT, READMISSION_RISK)
-       |
-       +--> Snowflake tables (analytics, AI, sharing)
-       +--> Iceberg tables in OneLake (Power BI Direct Lake)
-
-GOVERNANCE layer (tags + masking policies) applies across ALL layers
-Git Workspace provides versioned SQL delivery</pre>
+          <div style="background:#f8f9fa; border-radius:8px; padding:24px; font-family:monospace; font-size:14px; line-height:2; overflow-x:auto;">
+            <div style="text-align:center;">
+              <span style="background:#e3f2fd; padding:6px 16px; border-radius:6px; border:2px solid #1976d2;">Epic Clarity SQL Server</span>
+              <div style="color:#666;">&darr; <em>Snowlift / Snowloader</em></div>
+              <span style="background:#fff3e0; padding:6px 16px; border-radius:6px; border:2px solid #f57c00;">INBOUND</span>
+              <span style="font-size:11px; color:#888;"> &nbsp;PATIENT &middot; PAT_ENC &middot; CLARITY_SER &middot; ORDER_PROC &middot; HSP_ACCT_DX_LIST</span>
+              <div style="display:flex; justify-content:center; gap:40px; margin:4px 0;">
+                <span style="color:#666;">&darr; <em>Dynamic Tables</em></span>
+                <span style="color:#666;">&darr; <em>Stream + Task</em></span>
+              </div>
+              <div style="display:flex; justify-content:center; gap:24px; flex-wrap:wrap;">
+                <span style="background:#e8f5e9; padding:6px 16px; border-radius:6px; border:2px solid #388e3c;">CURATED</span>
+                <span style="background:#fce4ec; padding:6px 16px; border-radius:6px; border:2px solid #c62828;">GOVERNANCE &mdash; Audit Log</span>
+              </div>
+              <div style="color:#666;">&darr; <em>Dynamic Tables</em></div>
+              <span style="background:#f3e5f5; padding:6px 16px; border-radius:6px; border:2px solid #7b1fa2;">GOLD</span>
+              <div style="display:flex; justify-content:center; gap:24px; flex-wrap:wrap; margin-top:8px;">
+                <span style="background:#e0e0e0; padding:4px 12px; border-radius:4px; font-size:12px;">Streamlit Dashboard</span>
+                <span style="background:#e0e0e0; padding:4px 12px; border-radius:4px; font-size:12px;">Iceberg &rarr; OneLake &rarr; Power BI</span>
+                <span style="background:#e0e0e0; padding:4px 12px; border-radius:4px; font-size:12px;">Cortex AI</span>
+              </div>
+              <div style="margin-top:12px; font-size:12px; color:#666;">
+                <span style="background:#fff8e1; padding:2px 8px; border-radius:3px; border:1px solid #f9a825;">GOVERNANCE</span> Tags + Masking Policies apply across all layers &nbsp;|&nbsp;
+                <span style="background:#e8eaf6; padding:2px 8px; border-radius:3px; border:1px solid #3f51b5;">Git Workspace</span> Versioned SQL delivery
+              </div>
+            </div>
           </div>
 
           <h3>Verify end-to-end</h3>
@@ -838,6 +878,22 @@ UNION ALL SELECT 'GOLD.READMISSION_RISK', COUNT(*) FROM BUH_HOL.GOLD.READMISSION
 ORDER BY LAYER;</pre>
           </div>
 
+          <h3>Bonus: Cortex AI on clinical data</h3>
+          <p>Everything you built today is also accessible to Snowflake Cortex AI functions. With one line of SQL, you can summarize diagnoses, classify encounter types, or generate clinical narratives &mdash; directly on the data already in your pipeline.</p>
+          <div class="code-block">
+            <div class="code-header"><span>CoCo Prompt &ndash; Cortex AI teaser</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
+            <pre>Using the BUH_HOL.GOLD.ED_THROUGHPUT table, write a query that uses
+SNOWFLAKE.CORTEX.COMPLETE('llama3.1-8b', prompt) to generate a one-sentence
+clinical summary for each of the 10 most recent ED visits.
+
+The prompt for each row should include the patient name, primary diagnosis,
+ED hours, and total charges. Show the results as a table with PATIENT_NAME,
+PRIMARY_DIAGNOSIS, ED_HOURS, and the AI-generated summary.</pre>
+          </div>
+          <div class="callout callout-info">
+            <strong>What this unlocks:</strong> Cortex AI functions (<code>COMPLETE</code>, <code>SUMMARIZE</code>, <code>EXTRACT_ANSWER</code>, <code>SENTIMENT</code>, <code>TRANSLATE</code>) run inside Snowflake &mdash; no data leaves the platform, no external API keys. Combined with the GOLD tables you built today, this is the foundation for clinical AI workflows: auto-summarizing discharge notes, flagging high-risk encounters, or translating patient communications.
+          </div>
+
           <h3>Next steps for your environment</h3>
           <ol>
             <li><strong>Workspaces</strong> &ndash; Connect your GitLab/GitHub; store all SQL in version control</li>
@@ -847,6 +903,11 @@ ORDER BY LAYER;</pre>
             <li><strong>Cost</strong> &ndash; Tag warehouses for chargeback; right-size Fabric capacity for BI reads only</li>
             <li><strong>Dev/Test/Prod</strong> &ndash; Zero-copy clone for daily test refresh; DTs auto-refresh in the clone</li>
           </ol>
+
+          <div class="checkpoint">
+            <h4>Checkpoint</h4>
+            <p>Row counts match across all three layers (INBOUND &rarr; CURATED &rarr; GOLD). All 8 dynamic tables show ACTIVE scheduling state. Cortex AI generates clinical summaries from GOLD data. Pipeline is verified end-to-end.</p>
+          </div>
 
           <div class="step-nav">
             <button class="nav-btn nav-btn-prev">&larr; Back</button>
@@ -858,7 +919,7 @@ ORDER BY LAYER;</pre>
         <section class="step" id="step-6">
           <h2>Recap &amp; Cleanup</h2>
           <div class="step-meta">
-            <span class="badge badge-time">1:50 &ndash; 2:00</span>
+            <span class="badge badge-time">2:00 &ndash; 2:10</span>
             <span class="badge badge-script">06_cleanup.sql</span>
           </div>
 
@@ -867,6 +928,7 @@ ORDER BY LAYER;</pre>
             <tr><th>Topic</th><th>Key takeaway</th></tr>
             <tr><td>Git Workspaces</td><td>Connect repo, browse files, run SQL directly &ndash; replaces file-share chaos</td></tr>
             <tr><td>Dynamic Tables</td><td>Declare the result; Snowflake handles schedule and incremental refresh</td></tr>
+            <tr><td>Streams + Tasks</td><td>Event-driven complement to DTs &ndash; capture changes, trigger audit logs and side effects</td></tr>
             <tr><td>Power BI / Iceberg</td><td>Write GOLD as Iceberg to OneLake; PBI reads via Direct Lake, no SF compute</td></tr>
             <tr><td>Fabric Cost</td><td>All workloads share CUs; size capacity for BI reads, keep pipeline in Snowflake</td></tr>
             <tr><td>Tags &amp; Masking</td><td>Tag PII columns; attach masking to the tag &ndash; one policy protects everything</td></tr>

@@ -11,6 +11,9 @@ USE ROLE ACCOUNTADMIN;
 -- Remove warehouse tag before dropping (avoids orphaned tag references)
 ALTER WAREHOUSE COMPUTE_WH UNSET TAG BUH_HOL.GOVERNANCE.COST_CENTER;
 
+-- Suspend the audit task before dropping (tasks must be suspended before drop)
+ALTER TASK IF EXISTS BUH_HOL.INBOUND.LOG_PATIENT_CHANGES SUSPEND;
+
 -- Drop the lab database (drops all schemas, tables, dynamic tables, tags, policies)
 DROP DATABASE IF EXISTS BUH_HOL;
 

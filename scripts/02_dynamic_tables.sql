@@ -353,7 +353,69 @@ ORDER BY NAME;
 
 
 -- ============================================================
--- PART G: Discussion - design choices in this pipeline
+-- PART G: Streams + Tasks — event-driven complement
+-- ============================================================
+
+-- Dynamic tables are DECLARATIVE: "here is the result I want."
+-- Streams + Tasks are IMPERATIVE: "when this changes, do that."
+--
+-- Use dynamic tables for: transformations, dimensional models, aggregations
+-- Use streams + tasks for: audit logging, notifications, triggering
+--   external systems, complex CDC patterns with side effects
+--
+-- Below we create a stream that captures changes to the PATIENT table
+-- and a task that logs new patient arrivals into an audit table.
+
+-- Audit log table
+CREATE OR REPLACE TABLE BUH_HOL.GOVERNANCE.PATIENT_AUDIT_LOG (
+    AUDIT_ID         NUMBER AUTOINCREMENT,
+    PAT_ID           VARCHAR(20),
+    PAT_MRN_ID       VARCHAR(20),
+    PATIENT_NAME     VARCHAR(100),
+    ACTION           VARCHAR(10),     -- INSERT, UPDATE, DELETE
+    LOGGED_AT        TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
+    LOGGED_BY        VARCHAR(50) DEFAULT CURRENT_USER()
+);
+
+-- Stream captures inserts/updates/deletes on INBOUND.PATIENT
+CREATE OR REPLACE STREAM BUH_HOL.INBOUND.PATIENT_CHANGES
+    ON TABLE BUH_HOL.INBOUND.PATIENT
+    SHOW_INITIAL_ROWS = FALSE;
+
+-- Task checks the stream every minute and logs new arrivals
+CREATE OR REPLACE TASK BUH_HOL.INBOUND.LOG_PATIENT_CHANGES
+    WAREHOUSE = COMPUTE_WH
+    SCHEDULE  = '1 MINUTE'
+    WHEN SYSTEM$STREAM_HAS_DATA('BUH_HOL.INBOUND.PATIENT_CHANGES')
+AS
+    INSERT INTO BUH_HOL.GOVERNANCE.PATIENT_AUDIT_LOG (PAT_ID, PAT_MRN_ID, PATIENT_NAME, ACTION)
+    SELECT
+        PAT_ID,
+        PAT_MRN_ID,
+        INITCAP(PAT_FIRST_NAME) || ' ' || INITCAP(PAT_LAST_NAME),
+        CASE
+            WHEN METADATA$ACTION = 'INSERT' AND METADATA$ISUPDATE = FALSE THEN 'INSERT'
+            WHEN METADATA$ACTION = 'INSERT' AND METADATA$ISUPDATE = TRUE  THEN 'UPDATE'
+            WHEN METADATA$ACTION = 'DELETE' AND METADATA$ISUPDATE = FALSE THEN 'DELETE'
+        END
+    FROM BUH_HOL.INBOUND.PATIENT_CHANGES;
+
+-- Enable the task (tasks are created in suspended state)
+ALTER TASK BUH_HOL.INBOUND.LOG_PATIENT_CHANGES RESUME;
+
+-- Verify the stream and task exist
+SHOW STREAMS IN SCHEMA BUH_HOL.INBOUND;
+SHOW TASKS IN SCHEMA BUH_HOL.INBOUND;
+
+-- At this point, when you inserted Jorge Medina in Part E, the stream
+-- captured that change. The task will pick it up on its next run.
+-- Wait ~1 minute, then check the audit log:
+
+SELECT * FROM BUH_HOL.GOVERNANCE.PATIENT_AUDIT_LOG ORDER BY LOGGED_AT DESC;
+
+
+-- ============================================================
+-- PART H: Discussion - design choices in this pipeline
 -- ============================================================
 
 -- TARGET_LAG controls freshness, not schedule. Snowflake decides
@@ -393,6 +455,8 @@ ORDER BY NAME;
 --   - New patient P200001 (Jorge Medina) appearing in all layers
 --   - ED throughput now includes the new visit
 --   - Refresh history showing successful runs
+--   - Stream PATIENT_CHANGES and Task LOG_PATIENT_CHANGES active
+--   - Audit log captures Jorge Medina's arrival
 
 SELECT 'CURATED.DIM_PATIENT' AS DT, COUNT(*) AS ROWS FROM BUH_HOL.CURATED.DIM_PATIENT
 UNION ALL SELECT 'CURATED.DIM_PROVIDER', COUNT(*) FROM BUH_HOL.CURATED.DIM_PROVIDER
