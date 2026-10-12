@@ -8,21 +8,24 @@
 
   WHAT THIS CREATES:
     - Database:  BUH_HOL
-    - Schemas:   INBOUND, CURATED, GOLD, GOVERNANCE
+    - Schemas:   INBOUND, CORE_DATA, DATAMARTS, GOVERNANCE
     - Roles:     BUH_LAB_ADMIN, BUH_LAB_ANALYST, BUH_LAB_CLINICIAN
-    - Tables:    Epic Clarity-style source tables with synthetic clinical
-                 data for dynamic table pipelines and governance demos
+    - Tables:    Epic Clarity, Strata budget, and Workday purchasing
+                 source tables with synthetic data
 
   DATA VOLUMES:
-    - PATIENT:           100 hand-crafted rows
-    - PAT_ENC:         7,500 generated encounters (5 yrs of history)
-    - CLARITY_SER:        20 hand-crafted providers
-    - ORDER_PROC:     75,000 generated lab orders
-    - HSP_ACCT_DX_LIST:22,500 generated diagnoses
+    - PATIENT:           100 hand-crafted rows (Epic Clarity)
+    - PAT_ENC:         7,500 generated encounters (Epic Clarity)
+    - CLARITY_SER:        20 hand-crafted providers (Epic Clarity)
+    - ORDER_PROC:     75,000 generated lab orders (Epic Clarity)
+    - HSP_ACCT_DX_LIST:22,500 generated diagnoses (Epic Clarity)
+    - STRATA_BUDGET:     300 generated budget rows (Strata Decision Support)
+    - WORKDAY_PURCHASES:2,000 generated POs (Workday Procurement)
 
-  NOTE: INBOUND tables use Epic Clarity naming conventions. These mirror
-        the tables that Snowlift/Snowloader stages from your SQL Server
-        Clarity database today.
+  NOTE: INBOUND tables mirror three source systems:
+        - Epic Clarity (via Snowlift/Snowloader)
+        - Strata Decision Support (via connectors)
+        - Workday Procurement (via connectors)
 
   SAFE TO RERUN: Yes - uses CREATE OR REPLACE throughout
 =============================================================================*/
@@ -43,8 +46,8 @@ USE WAREHOUSE COMPUTE_WH;
 CREATE OR REPLACE DATABASE BUH_HOL;
 
 CREATE SCHEMA BUH_HOL.INBOUND;     -- Bronze: raw Clarity extracts land here
-CREATE SCHEMA BUH_HOL.CURATED;     -- Silver: cleaned dimensional model
-CREATE SCHEMA BUH_HOL.GOLD;        -- Gold: aggregated reporting tables
+CREATE SCHEMA BUH_HOL.CORE_DATA;     -- Silver: cleaned dimensional model
+CREATE SCHEMA BUH_HOL.DATAMARTS;        -- Gold: aggregated reporting tables
 CREATE SCHEMA BUH_HOL.GOVERNANCE;  -- Tags, masking policies
 
 -- ============================================================
@@ -521,6 +524,130 @@ SELECT
 FROM dx_raw r
 JOIN dx_codes d ON d.idx = r.dx_idx;
 
+-- -----------------------------------------------
+-- 3f. STRATA_BUDGET - Department budgets from Strata Decision Support
+--     ~300 rows (15 departments x 5 years x 4 budget categories)
+-- -----------------------------------------------
+CREATE OR REPLACE TABLE STRATA_BUDGET (
+    DEPT_ID         NUMBER(10)    NOT NULL,
+    DEPARTMENT_NAME VARCHAR(50),
+    FISCAL_YEAR     NUMBER(4),
+    CATEGORY        VARCHAR(30),      -- Labor, Supplies, Equipment, Other
+    BUDGET_AMOUNT   NUMBER(12,2),
+    LOAD_TS         TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
+);
+
+INSERT INTO STRATA_BUDGET (DEPT_ID, DEPARTMENT_NAME, FISCAL_YEAR, CATEGORY, BUDGET_AMOUNT)
+WITH dept_info AS (
+    SELECT COLUMN1 AS dept_id, COLUMN2 AS dept_name, COLUMN3 AS base_budget FROM VALUES
+        (1001,'Cardiology',       4200000),
+        (1002,'Primary Care',     3800000),
+        (1003,'Emergency Department', 6500000),
+        (1004,'Oncology',         3500000),
+        (1005,'OB/GYN',           3200000),
+        (1006,'Orthopedics',      3000000),
+        (1007,'Behavioral Health', 2100000),
+        (1008,'Nephrology',       2000000),
+        (1009,'Neurology',        2500000),
+        (1010,'Pulmonology',      2400000),
+        (1011,'Endocrinology',    1500000),
+        (1012,'Gastroenterology', 2800000),
+        (1013,'General Surgery',  5200000),
+        (1014,'Rheumatology',     1000000),
+        (1015,'Infectious Disease', 3100000)
+),
+categories AS (
+    SELECT COLUMN1 AS cat, COLUMN2 AS pct FROM VALUES
+        ('Labor', 0.55), ('Supplies', 0.25), ('Equipment', 0.12), ('Other', 0.08)
+),
+years AS (
+    SELECT 2020 + ROW_NUMBER() OVER (ORDER BY SEQ4()) - 1 AS yr
+    FROM TABLE(GENERATOR(ROWCOUNT => 5))
+)
+SELECT
+    d.dept_id,
+    d.dept_name,
+    y.yr,
+    c.cat,
+    ROUND(d.base_budget * c.pct * (1 + (y.yr - 2020) * 0.03) * (0.92 + ABS(MOD(HASH(d.dept_id * 7 + y.yr * 13 + ASCII(SUBSTR(c.cat,1,1))), 16)) / 100.0), 2)
+FROM dept_info d
+CROSS JOIN categories c
+CROSS JOIN years y;
+
+-- -----------------------------------------------
+-- 3g. WORKDAY_PURCHASES - Purchase orders from Workday Procurement
+--     ~2,000 rows (weighted by department, spread across 2 years)
+-- -----------------------------------------------
+CREATE OR REPLACE TABLE WORKDAY_PURCHASES (
+    PO_ID           VARCHAR(20)   NOT NULL,
+    DEPT_ID         NUMBER(10),
+    DEPARTMENT_NAME VARCHAR(50),
+    VENDOR_NAME     VARCHAR(100),
+    ITEM_CATEGORY   VARCHAR(50),
+    PO_AMOUNT       NUMBER(12,2),
+    PO_DATE         DATE,
+    LOAD_TS         TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
+);
+
+INSERT INTO WORKDAY_PURCHASES (PO_ID, DEPT_ID, DEPARTMENT_NAME, VENDOR_NAME, ITEM_CATEGORY, PO_AMOUNT, PO_DATE)
+WITH dept_info AS (
+    SELECT COLUMN1 AS dept_id, COLUMN2 AS dept_name FROM VALUES
+        (1001,'Cardiology'),(1002,'Primary Care'),(1003,'Emergency Department'),
+        (1004,'Oncology'),(1005,'OB/GYN'),(1006,'Orthopedics'),
+        (1007,'Behavioral Health'),(1008,'Nephrology'),(1009,'Neurology'),
+        (1010,'Pulmonology'),(1011,'Endocrinology'),(1012,'Gastroenterology'),
+        (1013,'General Surgery'),(1014,'Rheumatology'),(1015,'Infectious Disease')
+),
+vendors AS (
+    SELECT COLUMN1 AS idx, COLUMN2 AS vname, COLUMN3 AS vcat FROM VALUES
+        (0, 'Medline Industries',     'Medical Supplies'),
+        (1, 'Cardinal Health',        'Pharmaceuticals'),
+        (2, 'Stryker Corp',           'Equipment'),
+        (3, 'Johnson & Johnson',      'Medical Supplies'),
+        (4, 'Baxter International',   'Pharmaceuticals'),
+        (5, 'GE Healthcare',          'Equipment'),
+        (6, 'McKesson',               'Pharmaceuticals'),
+        (7, 'Becton Dickinson',       'Medical Supplies'),
+        (8, 'Dell Technologies',      'IT'),
+        (9, 'ABM Industries',         'Facilities')
+),
+po_raw AS (
+    SELECT
+        ROW_NUMBER() OVER (ORDER BY SEQ4()) AS rn,
+        ABS(MOD(HASH(SEQ4() * 7 + 13), 100))  AS dept_pct,
+        ABS(MOD(HASH(SEQ4() * 31 + 97), 10))  AS vendor_idx,
+        ABS(MOD(HASH(SEQ4() * 53 + 41), 100)) AS amt_pct,
+        DATEADD('day', -ABS(MOD(HASH(SEQ4() * 11 + 3), 730)), '2024-11-30') AS po_dt
+    FROM TABLE(GENERATOR(ROWCOUNT => 2000))
+)
+SELECT
+    'PO-' || LPAD(r.rn::VARCHAR, 6, '0'),
+    d.dept_id,
+    d.dept_name,
+    v.vname,
+    v.vcat,
+    ROUND(200 + r.amt_pct * 280 + CASE WHEN v.vcat = 'Equipment' THEN 15000 WHEN v.vcat = 'Pharmaceuticals' THEN 3000 ELSE 500 END, 2),
+    r.po_dt
+FROM po_raw r
+JOIN dept_info d ON d.dept_id = (1000 + 1 + CASE
+    WHEN r.dept_pct < 18 THEN 2   -- Emergency Department
+    WHEN r.dept_pct < 30 THEN 1   -- Primary Care (mapped to Cardiology dept_id offset)
+    WHEN r.dept_pct < 39 THEN 0   -- Cardiology
+    WHEN r.dept_pct < 47 THEN 12  -- General Surgery
+    WHEN r.dept_pct < 54 THEN 4   -- OB/GYN
+    WHEN r.dept_pct < 61 THEN 14  -- Infectious Disease
+    WHEN r.dept_pct < 67 THEN 11  -- Gastroenterology
+    WHEN r.dept_pct < 73 THEN 5   -- Orthopedics
+    WHEN r.dept_pct < 78 THEN 9   -- Pulmonology
+    WHEN r.dept_pct < 83 THEN 8   -- Neurology
+    WHEN r.dept_pct < 87 THEN 3   -- Oncology
+    WHEN r.dept_pct < 91 THEN 7   -- Nephrology
+    WHEN r.dept_pct < 95 THEN 6   -- Behavioral Health
+    WHEN r.dept_pct < 98 THEN 10  -- Endocrinology
+    ELSE 13                        -- Rheumatology
+END)
+JOIN vendors v ON v.idx = r.vendor_idx;
+
 -- ============================================================
 -- 4. CHECKPOINT: Verify setup
 -- ============================================================
@@ -529,6 +656,8 @@ UNION ALL SELECT 'PAT_ENC', COUNT(*) FROM BUH_HOL.INBOUND.PAT_ENC
 UNION ALL SELECT 'CLARITY_SER', COUNT(*) FROM BUH_HOL.INBOUND.CLARITY_SER
 UNION ALL SELECT 'ORDER_PROC', COUNT(*) FROM BUH_HOL.INBOUND.ORDER_PROC
 UNION ALL SELECT 'HSP_ACCT_DX_LIST', COUNT(*) FROM BUH_HOL.INBOUND.HSP_ACCT_DX_LIST
+UNION ALL SELECT 'STRATA_BUDGET', COUNT(*) FROM BUH_HOL.INBOUND.STRATA_BUDGET
+UNION ALL SELECT 'WORKDAY_PURCHASES', COUNT(*) FROM BUH_HOL.INBOUND.WORKDAY_PURCHASES
 ORDER BY TBL;
 
 /*
@@ -538,4 +667,6 @@ ORDER BY TBL;
   ORDER_PROC        75,000
   PAT_ENC            7,500
   PATIENT              100
+  STRATA_BUDGET        300
+  WORKDAY_PURCHASES  2,000
 */

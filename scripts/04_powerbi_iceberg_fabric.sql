@@ -45,9 +45,9 @@ USE ROLE ACCOUNTADMIN;
 -- from the same pool. If the pool is exhausted, workloads throttle.
 --
 -- CHEAPEST PATH for BUH:
---   1. Keep pipeline (INBOUND -> CURATED -> GOLD) in Snowflake
+--   1. Keep pipeline (INBOUND -> CORE_DATA -> DATAMARTS) in Snowflake
 --      using dynamic tables (you just built this!)
---   2. Write only the GOLD layer out as Iceberg to OneLake
+--   2. Write only the DATAMARTS layer out as Iceberg to OneLake
 --   3. Power BI reads from Direct Lake - no Snowflake queries
 --   4. Size Fabric capacity for BI read load only
 
@@ -59,18 +59,18 @@ USE ROLE ACCOUNTADMIN;
 -- stored in open Parquet format with Iceberg metadata. Any engine
 -- that reads Iceberg (Fabric, Spark, Trino) can access it.
 
-CREATE OR REPLACE ICEBERG TABLE BUH_HOL.GOLD.DEPT_DASHBOARD_ICEBERG
+CREATE OR REPLACE ICEBERG TABLE BUH_HOL.DATAMARTS.DEPT_DASHBOARD_ICEBERG
   CATALOG = 'SNOWFLAKE'
   EXTERNAL_VOLUME = ''
   BASE_LOCATION = 'dept_dashboard/'
 AS
-SELECT * FROM BUH_HOL.GOLD.DEPARTMENT_DASHBOARD;
+SELECT * FROM BUH_HOL.DATAMARTS.DEPARTMENT_DASHBOARD;
 
 -- Query it just like a regular table
-SELECT * FROM BUH_HOL.GOLD.DEPT_DASHBOARD_ICEBERG ORDER BY TOTAL_CHARGES DESC;
+SELECT * FROM BUH_HOL.DATAMARTS.DEPT_DASHBOARD_ICEBERG ORDER BY TOTAL_CHARGES DESC;
 
 -- See the Iceberg metadata
-DESCRIBE TABLE BUH_HOL.GOLD.DEPT_DASHBOARD_ICEBERG;
+DESCRIBE TABLE BUH_HOL.DATAMARTS.DEPT_DASHBOARD_ICEBERG;
 
 -- ============================================================
 -- PART D: OneLake integration (reference - not hands-on)
@@ -88,19 +88,19 @@ DESCRIBE TABLE BUH_HOL.GOLD.DEPT_DASHBOARD_ICEBERG;
 --   )
 -- );
 --
--- CREATE ICEBERG TABLE GOLD.PATIENT_SUMMARY_ICEBERG
+-- CREATE ICEBERG TABLE DATAMARTS.PATIENT_SUMMARY_ICEBERG
 --   CATALOG = 'SNOWFLAKE'
 --   EXTERNAL_VOLUME = 'onelake_vol'
 --   BASE_LOCATION = 'patient_summary/'
--- AS SELECT * FROM GOLD.DEPARTMENT_DASHBOARD;
+-- AS SELECT * FROM DATAMARTS.DEPARTMENT_DASHBOARD;
 
 -- ============================================================
 -- PART E: When to use which table type
 -- ============================================================
 
 -- RAW/INBOUND  -> Snowflake default (fast ingest, time travel, streams)
--- CURATED      -> Snowflake default (dynamic tables, joins, transforms)
--- GOLD/Datamart-> Iceberg in OneLake (open format, Direct Lake, no SF compute)
+-- CORE_DATA      -> Snowflake default (dynamic tables, joins, transforms)
+-- DATAMARTS/Datamart-> Iceberg in OneLake (open format, Direct Lake, no SF compute)
 --
 -- Purview CAN scan Snowflake directly (tables, views, lineage).
 -- BUT: Snowflake tags and Purview sensitivity labels are separate
@@ -116,4 +116,4 @@ DESCRIBE TABLE BUH_HOL.GOLD.DEPT_DASHBOARD_ICEBERG;
 --   3. How Iceberg tables work (same SQL, open Parquet format)
 --   4. The recommended hybrid pattern for BUH
 
-SELECT * FROM BUH_HOL.GOLD.DEPT_DASHBOARD_ICEBERG ORDER BY TOTAL_CHARGES DESC;
+SELECT * FROM BUH_HOL.DATAMARTS.DEPT_DASHBOARD_ICEBERG ORDER BY TOTAL_CHARGES DESC;

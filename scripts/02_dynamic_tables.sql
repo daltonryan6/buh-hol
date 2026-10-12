@@ -7,7 +7,7 @@
         the Snowforge-managed transformations with declarative SQL.
 
   ARCHITECTURE:
-    INBOUND (Clarity extracts) --> CURATED (dimensional model) --> GOLD (reporting)
+    INBOUND (Clarity extracts) --> CORE_DATA (dimensional model) --> DATAMARTS (reporting)
 
   TIME: ~40 minutes
   PREREQUISITE: Run 00_setup.sql first
@@ -34,7 +34,7 @@ USE ROLE ACCOUNTADMIN;
 -- No cron jobs. No orchestration. No manual MERGE scripts.
 
 -- ============================================================
--- PART B: Build the CURATED layer (dimensional model)
+-- PART B: Build the CORE_DATA layer (dimensional model)
 -- ============================================================
 -- These dynamic tables transform messy Clarity source data into
 -- a clean star schema. Each one reads from INBOUND and applies
@@ -46,7 +46,7 @@ USE ROLE ACCOUNTADMIN;
 -- NOT CURRENT_DATE(). Non-deterministic functions like CURRENT_DATE()
 -- prevent incremental refresh — a common gotcha with dynamic tables.
 -- REFRESH_MODE = INCREMENTAL: simple projection, perfect for change-only processing
-CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.CURATED.DIM_PATIENT
+CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.CORE_DATA.DIM_PATIENT
   TARGET_LAG = '1 minute'
   REFRESH_MODE = INCREMENTAL
   WAREHOUSE = COMPUTE_WH
@@ -72,7 +72,7 @@ FROM BUH_HOL.INBOUND.PATIENT;
 
 -- DIM_PROVIDER: Clean provider dimension from CLARITY_SER
 -- REFRESH_MODE = INCREMENTAL: filter + projection, low complexity
-CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.CURATED.DIM_PROVIDER
+CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.CORE_DATA.DIM_PROVIDER
   TARGET_LAG = '1 minute'
   REFRESH_MODE = INCREMENTAL
   WAREHOUSE = COMPUTE_WH
@@ -92,7 +92,7 @@ WHERE ACTIVE_STATUS = 'Y';
 -- REFRESH_MODE = ADAPTIVE: handles Snowlift bulk loads gracefully by
 -- auto-reinitializing when a full table reload lands, then resuming
 -- incremental processing for normal row-by-row changes.
-CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.CURATED.FACT_ENCOUNTER
+CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.CORE_DATA.FACT_ENCOUNTER
   TARGET_LAG = '1 minute'
   REFRESH_MODE = ADAPTIVE
   WAREHOUSE = COMPUTE_WH
@@ -129,7 +129,7 @@ LEFT JOIN BUH_HOL.INBOUND.CLARITY_SER s ON e.VISIT_PROV_ID = s.PROV_ID;
 
 -- FACT_DIAGNOSIS: Join diagnosis list to encounters for context
 -- REFRESH_MODE = INCREMENTAL: straightforward join, small change volumes
-CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.CURATED.FACT_DIAGNOSIS
+CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.CORE_DATA.FACT_DIAGNOSIS
   TARGET_LAG = '1 minute'
   REFRESH_MODE = INCREMENTAL
   WAREHOUSE = COMPUTE_WH
@@ -148,7 +148,7 @@ JOIN BUH_HOL.INBOUND.PAT_ENC e ON d.PAT_ENC_CSN_ID = e.PAT_ENC_CSN_ID;
 
 -- FACT_ORDER: Lab results with abnormal flagging
 -- REFRESH_MODE = INCREMENTAL: join + CASE decode, well-suited for incremental
-CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.CURATED.FACT_ORDER
+CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.CORE_DATA.FACT_ORDER
   TARGET_LAG = '1 minute'
   REFRESH_MODE = INCREMENTAL
   WAREHOUSE = COMPUTE_WH
@@ -176,38 +176,83 @@ LEFT JOIN BUH_HOL.INBOUND.PAT_ENC e ON o.PAT_ENC_CSN_ID = e.PAT_ENC_CSN_ID;
 
 
 -- ============================================================
--- PART C: Build the GOLD layer (reporting aggregates)
+-- PART C: Build the DATAMARTS layer (reporting aggregates)
 -- ============================================================
--- GOLD reads from CURATED (which reads INBOUND). The whole
+-- DATAMARTS reads from CORE_DATA (which reads INBOUND). The whole
 -- graph refreshes automatically when source data changes.
 
 -- DEPARTMENT_DASHBOARD: Operational metrics by department
+-- Joins THREE source systems: Clarity encounters, Strata budgets, Workday purchases
+-- This is the key multi-source consolidation table in the pipeline.
 -- TARGET_LAG = 15 minutes: operational reporting doesn't need sub-minute freshness
 -- REFRESH_MODE = FULL: aggregation over the full dataset, predictable cost per refresh
-CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.GOLD.DEPARTMENT_DASHBOARD
+CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.DATAMARTS.DEPARTMENT_DASHBOARD
   TARGET_LAG = '15 minutes'
   REFRESH_MODE = FULL
   WAREHOUSE = COMPUTE_WH
 AS
+WITH encounter_stats AS (
+    SELECT
+        DEPARTMENT_NAME,
+        COUNT(DISTINCT ENCOUNTER_ID)              AS ENCOUNTER_COUNT,
+        COUNT(DISTINCT PAT_ID)                    AS UNIQUE_PATIENTS,
+        COUNT_IF(ENCOUNTER_TYPE = 'Inpatient')    AS INPATIENT_COUNT,
+        COUNT_IF(ENCOUNTER_TYPE = 'Emergency')    AS ED_COUNT,
+        COUNT_IF(ENCOUNTER_TYPE = 'Outpatient')   AS OUTPATIENT_COUNT,
+        ROUND(AVG(CASE WHEN ENCOUNTER_TYPE = 'Inpatient'
+                  THEN LOS_DAYS_OR_HOURS END), 1) AS AVG_INPATIENT_LOS_DAYS,
+        SUM(TOTAL_CHARGES)                        AS TOTAL_CHARGES,
+        ROUND(AVG(TOTAL_CHARGES), 2)              AS AVG_CHARGE_PER_ENCOUNTER
+    FROM BUH_HOL.CORE_DATA.FACT_ENCOUNTER
+    GROUP BY DEPARTMENT_NAME
+),
+budget_stats AS (
+    -- Strata Decision Support: current fiscal year budget by department
+    SELECT
+        DEPARTMENT_NAME,
+        SUM(BUDGET_AMOUNT) AS ANNUAL_BUDGET
+    FROM BUH_HOL.INBOUND.STRATA_BUDGET
+    WHERE FISCAL_YEAR = 2024
+    GROUP BY DEPARTMENT_NAME
+),
+purchase_stats AS (
+    -- Workday Procurement: current year purchasing by department
+    SELECT
+        DEPARTMENT_NAME,
+        COUNT(*)           AS PURCHASE_ORDER_COUNT,
+        SUM(PO_AMOUNT)    AS TOTAL_PURCHASES,
+        ROUND(AVG(PO_AMOUNT), 2) AS AVG_PO_AMOUNT
+    FROM BUH_HOL.INBOUND.WORKDAY_PURCHASES
+    WHERE YEAR(PO_DATE) = 2024
+    GROUP BY DEPARTMENT_NAME
+)
 SELECT
     e.DEPARTMENT_NAME,
-    COUNT(DISTINCT e.ENCOUNTER_ID)              AS ENCOUNTER_COUNT,
-    COUNT(DISTINCT e.PAT_ID)                    AS UNIQUE_PATIENTS,
-    COUNT_IF(e.ENCOUNTER_TYPE = 'Inpatient')    AS INPATIENT_COUNT,
-    COUNT_IF(e.ENCOUNTER_TYPE = 'Emergency')    AS ED_COUNT,
-    COUNT_IF(e.ENCOUNTER_TYPE = 'Outpatient')   AS OUTPATIENT_COUNT,
-    ROUND(AVG(CASE WHEN e.ENCOUNTER_TYPE = 'Inpatient'
-              THEN e.LOS_DAYS_OR_HOURS END), 1) AS AVG_INPATIENT_LOS_DAYS,
-    SUM(e.TOTAL_CHARGES)                        AS TOTAL_CHARGES,
-    ROUND(AVG(e.TOTAL_CHARGES), 2)              AS AVG_CHARGE_PER_ENCOUNTER
-FROM BUH_HOL.CURATED.FACT_ENCOUNTER e
-GROUP BY e.DEPARTMENT_NAME;
+    -- Clarity: encounter metrics
+    e.ENCOUNTER_COUNT,
+    e.UNIQUE_PATIENTS,
+    e.INPATIENT_COUNT,
+    e.ED_COUNT,
+    e.OUTPATIENT_COUNT,
+    e.AVG_INPATIENT_LOS_DAYS,
+    e.TOTAL_CHARGES,
+    e.AVG_CHARGE_PER_ENCOUNTER,
+    -- Strata: budget vs actual
+    b.ANNUAL_BUDGET,
+    ROUND(e.TOTAL_CHARGES / NULLIF(b.ANNUAL_BUDGET, 0) * 100, 1) AS PCT_BUDGET_CONSUMED,
+    -- Workday: purchasing
+    COALESCE(w.PURCHASE_ORDER_COUNT, 0) AS PURCHASE_ORDER_COUNT,
+    COALESCE(w.TOTAL_PURCHASES, 0)      AS TOTAL_PURCHASES,
+    w.AVG_PO_AMOUNT
+FROM encounter_stats e
+LEFT JOIN budget_stats b ON e.DEPARTMENT_NAME = b.DEPARTMENT_NAME
+LEFT JOIN purchase_stats w ON e.DEPARTMENT_NAME = w.DEPARTMENT_NAME;
 
 -- ED_THROUGHPUT: Emergency Department operations
 -- TARGET_LAG = 1 minute: real-time ED dashboard for patient flow
 -- REFRESH_MODE = ADAPTIVE: multi-table join; adaptive handles occasional
 -- bulk reloads from upstream without manual intervention
-CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.GOLD.ED_THROUGHPUT
+CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.DATAMARTS.ED_THROUGHPUT
   TARGET_LAG = '1 minute'
   REFRESH_MODE = ADAPTIVE
   WAREHOUSE = COMPUTE_WH
@@ -224,16 +269,16 @@ SELECT
     d.DX_NAME                            AS PRIMARY_DIAGNOSIS,
     e.PROVIDER_NAME,
     e.TOTAL_CHARGES
-FROM BUH_HOL.CURATED.FACT_ENCOUNTER e
-JOIN BUH_HOL.CURATED.DIM_PATIENT p ON e.PAT_ID = p.PAT_ID
-LEFT JOIN BUH_HOL.CURATED.FACT_DIAGNOSIS d
+FROM BUH_HOL.CORE_DATA.FACT_ENCOUNTER e
+JOIN BUH_HOL.CORE_DATA.DIM_PATIENT p ON e.PAT_ID = p.PAT_ID
+LEFT JOIN BUH_HOL.CORE_DATA.FACT_DIAGNOSIS d
     ON e.ENCOUNTER_ID = d.ENCOUNTER_ID AND d.IS_PRIMARY = TRUE
 WHERE e.ENCOUNTER_TYPE = 'Emergency';
 
 -- READMISSION_RISK: Patients with 2+ encounters within 30 days
 -- TARGET_LAG = DOWNSTREAM: only refreshes when a downstream consumer queries it.
 -- Perfect for analytics tables that don't need continuous freshness.
-CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.GOLD.READMISSION_RISK
+CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.DATAMARTS.READMISSION_RISK
   TARGET_LAG = DOWNSTREAM
   REFRESH_MODE = INCREMENTAL
   WAREHOUSE = COMPUTE_WH
@@ -251,12 +296,12 @@ SELECT
     e2.CONTACT_DATE                      AS RETURN_DATE,
     e2.DEPARTMENT_NAME                   AS RETURN_DEPT,
     DATEDIFF('day', e1.CONTACT_DATE, e2.CONTACT_DATE) AS DAYS_BETWEEN
-FROM BUH_HOL.CURATED.FACT_ENCOUNTER e1
-JOIN BUH_HOL.CURATED.FACT_ENCOUNTER e2
+FROM BUH_HOL.CORE_DATA.FACT_ENCOUNTER e1
+JOIN BUH_HOL.CORE_DATA.FACT_ENCOUNTER e2
     ON e1.PAT_ID = e2.PAT_ID
     AND e2.CONTACT_DATE > e1.CONTACT_DATE
     AND DATEDIFF('day', e1.CONTACT_DATE, e2.CONTACT_DATE) <= 30
-JOIN BUH_HOL.CURATED.DIM_PATIENT p ON e1.PAT_ID = p.PAT_ID
+JOIN BUH_HOL.CORE_DATA.DIM_PATIENT p ON e1.PAT_ID = p.PAT_ID
 WHERE e1.ENCOUNTER_TYPE IN ('Inpatient', 'Emergency');
 
 
@@ -264,18 +309,18 @@ WHERE e1.ENCOUNTER_TYPE IN ('Inpatient', 'Emergency');
 -- PART D: Verify the pipeline
 -- ============================================================
 
--- Check CURATED tables are populating
-SELECT 'DIM_PATIENT' AS DT, COUNT(*) AS ROWS FROM BUH_HOL.CURATED.DIM_PATIENT
-UNION ALL SELECT 'DIM_PROVIDER', COUNT(*) FROM BUH_HOL.CURATED.DIM_PROVIDER
-UNION ALL SELECT 'FACT_ENCOUNTER', COUNT(*) FROM BUH_HOL.CURATED.FACT_ENCOUNTER
-UNION ALL SELECT 'FACT_DIAGNOSIS', COUNT(*) FROM BUH_HOL.CURATED.FACT_DIAGNOSIS
-UNION ALL SELECT 'FACT_ORDER', COUNT(*) FROM BUH_HOL.CURATED.FACT_ORDER
+-- Check CORE_DATA tables are populating
+SELECT 'DIM_PATIENT' AS DT, COUNT(*) AS ROWS FROM BUH_HOL.CORE_DATA.DIM_PATIENT
+UNION ALL SELECT 'DIM_PROVIDER', COUNT(*) FROM BUH_HOL.CORE_DATA.DIM_PROVIDER
+UNION ALL SELECT 'FACT_ENCOUNTER', COUNT(*) FROM BUH_HOL.CORE_DATA.FACT_ENCOUNTER
+UNION ALL SELECT 'FACT_DIAGNOSIS', COUNT(*) FROM BUH_HOL.CORE_DATA.FACT_DIAGNOSIS
+UNION ALL SELECT 'FACT_ORDER', COUNT(*) FROM BUH_HOL.CORE_DATA.FACT_ORDER
 ORDER BY DT;
 
--- Check GOLD tables
-SELECT * FROM BUH_HOL.GOLD.DEPARTMENT_DASHBOARD ORDER BY TOTAL_CHARGES DESC;
-SELECT * FROM BUH_HOL.GOLD.ED_THROUGHPUT ORDER BY CONTACT_DATE;
-SELECT * FROM BUH_HOL.GOLD.READMISSION_RISK ORDER BY DAYS_BETWEEN;
+-- Check DATAMARTS tables
+SELECT * FROM BUH_HOL.DATAMARTS.DEPARTMENT_DASHBOARD ORDER BY TOTAL_CHARGES DESC;
+SELECT * FROM BUH_HOL.DATAMARTS.ED_THROUGHPUT ORDER BY CONTACT_DATE;
+SELECT * FROM BUH_HOL.DATAMARTS.READMISSION_RISK ORDER BY DAYS_BETWEEN;
 
 
 -- ============================================================
@@ -315,14 +360,14 @@ VALUES
 
 -- *** Wait ~1 minute for dynamic tables to refresh ***
 
--- Check the CURATED layer - new patient should appear
-SELECT * FROM BUH_HOL.CURATED.DIM_PATIENT WHERE PAT_ID = 'P200001';
+-- Check the CORE_DATA layer - new patient should appear
+SELECT * FROM BUH_HOL.CORE_DATA.DIM_PATIENT WHERE PAT_ID = 'P200001';
 
--- Check GOLD - the ED throughput dashboard should include the new visit
-SELECT * FROM BUH_HOL.GOLD.ED_THROUGHPUT WHERE PAT_ID = 'P200001';
+-- Check DATAMARTS - the ED throughput dashboard should include the new visit
+SELECT * FROM BUH_HOL.DATAMARTS.ED_THROUGHPUT WHERE PAT_ID = 'P200001';
 
 -- Check the department dashboard - ED numbers should have increased
-SELECT * FROM BUH_HOL.GOLD.DEPARTMENT_DASHBOARD
+SELECT * FROM BUH_HOL.DATAMARTS.DEPARTMENT_DASHBOARD
 WHERE DEPARTMENT_NAME = 'Emergency Department';
 
 
@@ -420,12 +465,12 @@ SELECT * FROM BUH_HOL.GOVERNANCE.PATIENT_AUDIT_LOG ORDER BY LOGGED_AT DESC;
 
 -- TARGET_LAG controls freshness, not schedule. Snowflake decides
 -- WHEN to refresh. We used three different settings:
---   '1 minute'   = CURATED layer + ED_THROUGHPUT (real-time clinical)
+--   '1 minute'   = CORE_DATA layer + ED_THROUGHPUT (real-time clinical)
 --   '15 minutes' = DEPARTMENT_DASHBOARD (operational, doesn't need sub-minute)
 --   DOWNSTREAM   = READMISSION_RISK (analytics — refresh only when queried)
 --
 -- REFRESH_MODE controls HOW data is refreshed:
---   INCREMENTAL  = process only changed rows (most CURATED tables + READMISSION_RISK)
+--   INCREMENTAL  = process only changed rows (most CORE_DATA tables + READMISSION_RISK)
 --   ADAPTIVE     = incremental by default, auto-reinitializes on bulk loads
 --                   (FACT_ENCOUNTER, ED_THROUGHPUT — handles Snowlift reloads)
 --   FULL         = reprocess everything each refresh (DEPARTMENT_DASHBOARD —
@@ -448,9 +493,9 @@ SELECT * FROM BUH_HOL.GOVERNANCE.PATIENT_AUDIT_LOG ORDER BY LOGGED_AT DESC;
 -- ============================================================
 
 -- You should see:
---   - 5 dynamic tables in CURATED (DIM_PATIENT, DIM_PROVIDER,
+--   - 5 dynamic tables in CORE_DATA (DIM_PATIENT, DIM_PROVIDER,
 --     FACT_ENCOUNTER, FACT_DIAGNOSIS, FACT_ORDER)
---   - 3 dynamic tables in GOLD (DEPARTMENT_DASHBOARD,
+--   - 3 dynamic tables in DATAMARTS (DEPARTMENT_DASHBOARD,
 --     ED_THROUGHPUT, READMISSION_RISK)
 --   - New patient P200001 (Jorge Medina) appearing in all layers
 --   - ED throughput now includes the new visit
@@ -458,12 +503,12 @@ SELECT * FROM BUH_HOL.GOVERNANCE.PATIENT_AUDIT_LOG ORDER BY LOGGED_AT DESC;
 --   - Stream PATIENT_CHANGES and Task LOG_PATIENT_CHANGES active
 --   - Audit log captures Jorge Medina's arrival
 
-SELECT 'CURATED.DIM_PATIENT' AS DT, COUNT(*) AS ROWS FROM BUH_HOL.CURATED.DIM_PATIENT
-UNION ALL SELECT 'CURATED.DIM_PROVIDER', COUNT(*) FROM BUH_HOL.CURATED.DIM_PROVIDER
-UNION ALL SELECT 'CURATED.FACT_ENCOUNTER', COUNT(*) FROM BUH_HOL.CURATED.FACT_ENCOUNTER
-UNION ALL SELECT 'CURATED.FACT_DIAGNOSIS', COUNT(*) FROM BUH_HOL.CURATED.FACT_DIAGNOSIS
-UNION ALL SELECT 'CURATED.FACT_ORDER', COUNT(*) FROM BUH_HOL.CURATED.FACT_ORDER
-UNION ALL SELECT 'GOLD.DEPARTMENT_DASHBOARD', COUNT(*) FROM BUH_HOL.GOLD.DEPARTMENT_DASHBOARD
-UNION ALL SELECT 'GOLD.ED_THROUGHPUT', COUNT(*) FROM BUH_HOL.GOLD.ED_THROUGHPUT
-UNION ALL SELECT 'GOLD.READMISSION_RISK', COUNT(*) FROM BUH_HOL.GOLD.READMISSION_RISK
+SELECT 'CORE_DATA.DIM_PATIENT' AS DT, COUNT(*) AS ROWS FROM BUH_HOL.CORE_DATA.DIM_PATIENT
+UNION ALL SELECT 'CORE_DATA.DIM_PROVIDER', COUNT(*) FROM BUH_HOL.CORE_DATA.DIM_PROVIDER
+UNION ALL SELECT 'CORE_DATA.FACT_ENCOUNTER', COUNT(*) FROM BUH_HOL.CORE_DATA.FACT_ENCOUNTER
+UNION ALL SELECT 'CORE_DATA.FACT_DIAGNOSIS', COUNT(*) FROM BUH_HOL.CORE_DATA.FACT_DIAGNOSIS
+UNION ALL SELECT 'CORE_DATA.FACT_ORDER', COUNT(*) FROM BUH_HOL.CORE_DATA.FACT_ORDER
+UNION ALL SELECT 'DATAMARTS.DEPARTMENT_DASHBOARD', COUNT(*) FROM BUH_HOL.DATAMARTS.DEPARTMENT_DASHBOARD
+UNION ALL SELECT 'DATAMARTS.ED_THROUGHPUT', COUNT(*) FROM BUH_HOL.DATAMARTS.ED_THROUGHPUT
+UNION ALL SELECT 'DATAMARTS.READMISSION_RISK', COUNT(*) FROM BUH_HOL.DATAMARTS.READMISSION_RISK
 ORDER BY DT;

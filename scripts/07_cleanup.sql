@@ -1,6 +1,6 @@
 /*=============================================================================
   Brown University Health - Hands-On Lab
-  Script 06: Cleanup
+  Script 07: Cleanup
 
   Removes all lab objects created during the session.
   Run this when you are finished with the lab.
@@ -8,14 +8,21 @@
 
 USE ROLE ACCOUNTADMIN;
 
--- Remove warehouse tag before dropping (avoids orphaned tag references)
+-- Remove warehouse tag and resource monitor before dropping
 ALTER WAREHOUSE COMPUTE_WH UNSET TAG BUH_HOL.GOVERNANCE.COST_CENTER;
+ALTER WAREHOUSE COMPUTE_WH SET RESOURCE_MONITOR = NULL;
 
 -- Suspend the audit task before dropping (tasks must be suspended before drop)
 ALTER TASK IF EXISTS BUH_HOL.INBOUND.LOG_PATIENT_CHANGES SUSPEND;
 
 -- Drop the lab database (drops all schemas, tables, dynamic tables, tags, policies)
 DROP DATABASE IF EXISTS BUH_HOL;
+
+-- Drop the dev clone if it still exists
+DROP DATABASE IF EXISTS BUH_HOL_DEV;
+
+-- Drop resource monitor
+DROP RESOURCE MONITOR IF EXISTS BUH_LAB_MONITOR;
 
 -- Drop lab roles
 DROP ROLE IF EXISTS BUH_LAB_ADMIN;
