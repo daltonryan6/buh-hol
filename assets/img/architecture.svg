@@ -1,0 +1,163 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" font-family="'Segoe UI',system-ui,-apple-system,sans-serif">
+  <defs>
+    <linearGradient id="src" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+    <linearGradient id="inb" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#78716c"/>
+      <stop offset="100%" stop-color="#57534e"/>
+    </linearGradient>
+    <linearGradient id="cdt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+    <linearGradient id="dmt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+    <linearGradient id="con" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0d9488"/>
+      <stop offset="100%" stop-color="#0f766e"/>
+    </linearGradient>
+    <linearGradient id="gov" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#dc2626"/>
+      <stop offset="100%" stop-color="#b91c1c"/>
+    </linearGradient>
+    <filter id="sh" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.15"/>
+    </filter>
+    <marker id="ar" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 3.5 L 0 7 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="540" rx="12" fill="#0f172a"/>
+
+  <!-- Title -->
+  <text x="480" y="30" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="700" letter-spacing="0.5">Architecture You Built Today</text>
+
+  <!-- ═══════════ ROW 1: SOURCE SYSTEMS ═══════════ -->
+  <text x="30" y="62" fill="#64748b" font-size="9" font-weight="600" letter-spacing="1">SOURCE SYSTEMS</text>
+  <g filter="url(#sh)">
+    <rect x="30" y="72" width="180" height="40" rx="6" fill="url(#src)"/>
+    <text x="120" y="90" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">Epic Clarity</text>
+    <text x="120" y="104" text-anchor="middle" fill="#cbd5e1" font-size="8">SQL Server</text>
+  </g>
+  <g filter="url(#sh)">
+    <rect x="230" y="72" width="180" height="40" rx="6" fill="#059669"/>
+    <text x="320" y="90" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">Strata Budget</text>
+    <text x="320" y="104" text-anchor="middle" fill="#a7f3d0" font-size="8">Decision Support</text>
+  </g>
+  <g filter="url(#sh)">
+    <rect x="430" y="72" width="180" height="40" rx="6" fill="#7c3aed"/>
+    <text x="520" y="90" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">Workday</text>
+    <text x="520" y="104" text-anchor="middle" fill="#ddd6fe" font-size="8">Procurement</text>
+  </g>
+
+  <!-- Ingestion labels -->
+  <text x="120" y="126" text-anchor="middle" fill="#94a3b8" font-size="8">Snowlift / Snowloader</text>
+  <line x1="120" y1="112" x2="120" y2="140" stroke="#94a3b8" stroke-width="1" marker-end="url(#ar)" opacity="0.5"/>
+  <text x="320" y="126" text-anchor="middle" fill="#94a3b8" font-size="8">Connectors</text>
+  <line x1="320" y1="112" x2="320" y2="140" stroke="#94a3b8" stroke-width="1" marker-end="url(#ar)" opacity="0.5"/>
+  <text x="520" y="126" text-anchor="middle" fill="#94a3b8" font-size="8">Connectors</text>
+  <line x1="520" y1="112" x2="520" y2="140" stroke="#94a3b8" stroke-width="1" marker-end="url(#ar)" opacity="0.5"/>
+
+  <!-- ═══════════ ROW 2: INBOUND ═══════════ -->
+  <g filter="url(#sh)">
+    <rect x="30" y="140" width="580" height="44" rx="6" fill="url(#inb)"/>
+    <text x="60" y="160" fill="#fff" font-size="11" font-weight="600">INBOUND</text>
+    <text x="60" y="175" fill="#d6d3d1" font-size="8">PATIENT  |  PAT_ENC  |  CLARITY_SER  |  ORDER_PROC  |  HSP_ACCT_DX_LIST  |  STRATA_BUDGET  |  WORKDAY_PURCHASES</text>
+  </g>
+
+  <!-- Arrow down: INBOUND → CORE_DATA + Stream -->
+  <line x1="220" y1="184" x2="220" y2="210" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ar)" opacity="0.5"/>
+  <text x="230" y="202" fill="#94a3b8" font-size="8">Dynamic Tables</text>
+  <line x1="500" y1="184" x2="760" y2="210" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ar)" opacity="0.4"/>
+  <text x="630" y="196" fill="#94a3b8" font-size="8">Stream + Task</text>
+
+  <!-- ═══════════ ROW 3: CORE_DATA + GOVERNANCE ═══════════ -->
+  <g filter="url(#sh)">
+    <rect x="30" y="212" width="420" height="44" rx="6" fill="url(#cdt)"/>
+    <text x="60" y="232" fill="#fff" font-size="11" font-weight="600">CORE_DATA</text>
+    <text x="60" y="247" fill="#bfdbfe" font-size="8">DIM_PATIENT  |  DIM_PROVIDER  |  FACT_ENCOUNTER  |  FACT_ORDER  |  FACT_DIAGNOSIS</text>
+  </g>
+  <g filter="url(#sh)">
+    <rect x="470" y="212" width="140" height="44" rx="6" fill="url(#gov)"/>
+    <text x="540" y="232" text-anchor="middle" fill="#fff" font-size="10" font-weight="600">GOVERNANCE</text>
+    <text x="540" y="246" text-anchor="middle" fill="#fca5a5" font-size="8">Audit Log</text>
+  </g>
+
+  <!-- Arrow down: CORE_DATA → DATAMARTS -->
+  <line x1="220" y1="256" x2="220" y2="282" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#ar)" opacity="0.5"/>
+  <text x="230" y="274" fill="#fbbf24" font-size="8">Dynamic Tables (joins all 3 sources)</text>
+
+  <!-- ═══════════ ROW 4: DATAMARTS ═══════════ -->
+  <g filter="url(#sh)">
+    <rect x="30" y="284" width="580" height="44" rx="6" fill="url(#dmt)"/>
+    <text x="60" y="304" fill="#fff" font-size="11" font-weight="600">DATAMARTS</text>
+    <text x="60" y="319" fill="#fde68a" font-size="8">DEPARTMENT_DASHBOARD  |  ED_THROUGHPUT  |  READMISSION_RISK</text>
+  </g>
+
+  <!-- Arrows to consumers -->
+  <line x1="120" y1="328" x2="120" y2="370" stroke="#94a3b8" stroke-width="1" marker-end="url(#ar)" opacity="0.4"/>
+  <line x1="300" y1="328" x2="300" y2="370" stroke="#94a3b8" stroke-width="1" marker-end="url(#ar)" opacity="0.4"/>
+  <line x1="480" y1="328" x2="480" y2="370" stroke="#94a3b8" stroke-width="1" marker-end="url(#ar)" opacity="0.4"/>
+
+  <!-- ═══════════ ROW 5: CONSUMERS ═══════════ -->
+  <g filter="url(#sh)">
+    <rect x="30" y="372" width="180" height="44" rx="6" fill="url(#con)"/>
+    <text x="120" y="392" text-anchor="middle" fill="#fff" font-size="10" font-weight="600">Streamlit Dashboard</text>
+    <text x="120" y="406" text-anchor="middle" fill="#99f6e4" font-size="8">Interactive, in Snowflake</text>
+  </g>
+  <g filter="url(#sh)">
+    <rect x="225" y="372" width="180" height="44" rx="6" fill="url(#con)"/>
+    <text x="315" y="392" text-anchor="middle" fill="#fff" font-size="10" font-weight="600">Iceberg / Power BI</text>
+    <text x="315" y="406" text-anchor="middle" fill="#99f6e4" font-size="8">OneLake, Direct Lake</text>
+  </g>
+  <g filter="url(#sh)">
+    <rect x="420" y="372" width="180" height="44" rx="6" fill="url(#con)"/>
+    <text x="510" y="392" text-anchor="middle" fill="#fff" font-size="10" font-weight="600">Cortex AI / ML</text>
+    <text x="510" y="406" text-anchor="middle" fill="#99f6e4" font-size="8">COMPLETE, FORECAST, UDFs</text>
+  </g>
+
+  <!-- ═══════════ RIGHT COLUMN: CROSS-CUTTING ═══════════ -->
+  <rect x="640" y="72" width="290" height="350" rx="8" fill="#1e293b" opacity="0.5" stroke="#334155" stroke-width="1"/>
+  <text x="785" y="92" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="700" letter-spacing="1">PLATFORM CAPABILITIES</text>
+
+  <rect x="660" y="108" width="250" height="32" rx="4" fill="#334155"/>
+  <text x="785" y="128" text-anchor="middle" fill="#e2e8f0" font-size="10">Tags + Masking Policies</text>
+
+  <rect x="660" y="150" width="250" height="32" rx="4" fill="#334155"/>
+  <text x="785" y="170" text-anchor="middle" fill="#e2e8f0" font-size="10">Zero-Copy Cloning (Dev/Test)</text>
+
+  <rect x="660" y="192" width="250" height="32" rx="4" fill="#334155"/>
+  <text x="785" y="212" text-anchor="middle" fill="#e2e8f0" font-size="10">Resource Monitors / Isolation</text>
+
+  <rect x="660" y="234" width="250" height="32" rx="4" fill="#334155"/>
+  <text x="785" y="254" text-anchor="middle" fill="#e2e8f0" font-size="10">Query Caching (3 layers)</text>
+
+  <rect x="660" y="276" width="250" height="32" rx="4" fill="#334155"/>
+  <text x="785" y="296" text-anchor="middle" fill="#e2e8f0" font-size="10">Custom Python UDFs</text>
+
+  <rect x="660" y="318" width="250" height="32" rx="4" fill="#334155"/>
+  <text x="785" y="338" text-anchor="middle" fill="#e2e8f0" font-size="10">Git Workspace (versioned SQL)</text>
+
+  <rect x="660" y="360" width="250" height="32" rx="4" fill="#334155"/>
+  <text x="785" y="380" text-anchor="middle" fill="#e2e8f0" font-size="10">Streams + Tasks (audit CDC)</text>
+
+  <!-- ═══════════ BOTTOM LEGEND ═══════════ -->
+  <rect x="20" y="440" width="920" height="85" rx="8" fill="#1e293b" opacity="0.6"/>
+  <text x="40" y="462" fill="#94a3b8" font-size="10" font-weight="600" letter-spacing="1">WHAT YOU BUILT</text>
+  <text x="40" y="480" fill="#cbd5e1" font-size="9">7 INBOUND tables from 3 source systems</text>
+  <text x="40" y="494" fill="#cbd5e1" font-size="9">5 CORE_DATA dynamic tables (auto-refresh)</text>
+  <text x="40" y="508" fill="#cbd5e1" font-size="9">3 DATAMARTS reporting tables (multi-source joins)</text>
+
+  <text x="380" y="480" fill="#cbd5e1" font-size="9">Stream + Task audit pipeline</text>
+  <text x="380" y="494" fill="#cbd5e1" font-size="9">Tag-based masking (SSN, MRN, DOB, etc.)</text>
+  <text x="380" y="508" fill="#cbd5e1" font-size="9">Streamlit dashboard with interactive controls</text>
+
+  <text x="700" y="480" fill="#cbd5e1" font-size="9">Zero-copy clone (instant dev environment)</text>
+  <text x="700" y="494" fill="#cbd5e1" font-size="9">Resource monitor + warehouse isolation</text>
+  <text x="700" y="508" fill="#cbd5e1" font-size="9">Python UDF + Cortex AI/ML functions</text>
+</svg>

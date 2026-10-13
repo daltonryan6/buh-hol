@@ -1,14 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" font-family="'Segoe UI',system-ui,-apple-system,sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 620" font-family="'Segoe UI',system-ui,-apple-system,sans-serif">
   <defs>
-    <linearGradient id="inbound" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="clarity" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#64748b"/>
       <stop offset="100%" stop-color="#475569"/>
     </linearGradient>
-    <linearGradient id="curated" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="strata" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+    <linearGradient id="workday" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#6d28d9"/>
+    </linearGradient>
+    <linearGradient id="core" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#2563eb"/>
       <stop offset="100%" stop-color="#1d4ed8"/>
     </linearGradient>
-    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="datamarts" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#d97706"/>
       <stop offset="100%" stop-color="#b45309"/>
     </linearGradient>
@@ -18,139 +26,155 @@
     <marker id="arrow" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
       <path d="M 0 0 L 10 3.5 L 0 7 z" fill="#94a3b8"/>
     </marker>
+    <marker id="arrowGold" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 3.5 L 0 7 z" fill="#fbbf24"/>
+    </marker>
   </defs>
 
   <!-- Background -->
-  <rect width="960" height="520" rx="12" fill="#0f172a"/>
+  <rect width="1020" height="620" rx="12" fill="#0f172a"/>
 
-  <!-- Layer labels -->
-  <text x="110" y="38" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="600" letter-spacing="1.5">INBOUND</text>
-  <text x="110" y="52" text-anchor="middle" fill="#64748b" font-size="9" letter-spacing="0.5">Epic Clarity Sources</text>
+  <!-- ═══════════ COLUMN HEADERS ═══════════ -->
+  <text x="110" y="32" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="600" letter-spacing="1.5">INBOUND</text>
+  <text x="450" y="32" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="600" letter-spacing="1.5">CORE_DATA</text>
+  <text x="450" y="46" text-anchor="middle" fill="#3b82f6" font-size="9" letter-spacing="0.5">Dynamic Tables</text>
+  <text x="830" y="32" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="600" letter-spacing="1.5">DATAMARTS</text>
+  <text x="830" y="46" text-anchor="middle" fill="#d97706" font-size="9" letter-spacing="0.5">Reporting Dashboards</text>
 
-  <text x="440" y="38" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="600" letter-spacing="1.5">CORE_DATA</text>
-  <text x="440" y="52" text-anchor="middle" fill="#3b82f6" font-size="9" letter-spacing="0.5">Dynamic Tables</text>
+  <!-- ═══════════ SOURCE SYSTEM LABELS ═══════════ -->
+  <!-- Epic Clarity group label -->
+  <rect x="12" y="56" width="196" height="18" rx="3" fill="#334155" opacity="0.7"/>
+  <text x="110" y="69" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600" letter-spacing="0.5">EPIC CLARITY</text>
 
-  <text x="800" y="38" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="600" letter-spacing="1.5">DATAMARTS</text>
-  <text x="800" y="52" text-anchor="middle" fill="#d97706" font-size="9" letter-spacing="0.5">Reporting Dashboards</text>
+  <!-- Strata group label -->
+  <rect x="12" y="372" width="196" height="18" rx="3" fill="#064e3b" opacity="0.7"/>
+  <text x="110" y="385" text-anchor="middle" fill="#6ee7b7" font-size="9" font-weight="600" letter-spacing="0.5">STRATA DECISION SUPPORT</text>
 
-  <!-- ═══════════ INBOUND BOXES ═══════════ -->
+  <!-- Workday group label -->
+  <rect x="12" y="450" width="196" height="18" rx="3" fill="#4c1d95" opacity="0.7"/>
+  <text x="110" y="463" text-anchor="middle" fill="#c4b5fd" font-size="9" font-weight="600" letter-spacing="0.5">WORKDAY PROCUREMENT</text>
+
+  <!-- ═══════════ INBOUND: CLARITY TABLES ═══════════ -->
   <g filter="url(#shadow)">
-    <rect x="20" y="80" width="180" height="44" rx="6" fill="url(#inbound)"/>
+    <rect x="20" y="80" width="180" height="44" rx="6" fill="url(#clarity)"/>
     <text x="110" y="100" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">PATIENT</text>
     <text x="110" y="114" text-anchor="middle" fill="#cbd5e1" font-size="9">100 rows</text>
   </g>
   <g filter="url(#shadow)">
-    <rect x="20" y="148" width="180" height="44" rx="6" fill="url(#inbound)"/>
-    <text x="110" y="168" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">PAT_ENC</text>
-    <text x="110" y="182" text-anchor="middle" fill="#cbd5e1" font-size="9">7,500 encounters</text>
+    <rect x="20" y="134" width="180" height="44" rx="6" fill="url(#clarity)"/>
+    <text x="110" y="154" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">PAT_ENC</text>
+    <text x="110" y="168" text-anchor="middle" fill="#cbd5e1" font-size="9">7,500 encounters</text>
   </g>
   <g filter="url(#shadow)">
-    <rect x="20" y="216" width="180" height="44" rx="6" fill="url(#inbound)"/>
-    <text x="110" y="236" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">CLARITY_SER</text>
-    <text x="110" y="250" text-anchor="middle" fill="#cbd5e1" font-size="9">20 providers</text>
+    <rect x="20" y="188" width="180" height="44" rx="6" fill="url(#clarity)"/>
+    <text x="110" y="208" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">CLARITY_SER</text>
+    <text x="110" y="222" text-anchor="middle" fill="#cbd5e1" font-size="9">20 providers</text>
   </g>
   <g filter="url(#shadow)">
-    <rect x="20" y="284" width="180" height="44" rx="6" fill="url(#inbound)"/>
-    <text x="110" y="304" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">ORDER_PROC</text>
-    <text x="110" y="318" text-anchor="middle" fill="#cbd5e1" font-size="9">75,000 lab orders</text>
+    <rect x="20" y="242" width="180" height="44" rx="6" fill="url(#clarity)"/>
+    <text x="110" y="262" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">ORDER_PROC</text>
+    <text x="110" y="276" text-anchor="middle" fill="#cbd5e1" font-size="9">75,000 lab orders</text>
   </g>
   <g filter="url(#shadow)">
-    <rect x="20" y="352" width="180" height="44" rx="6" fill="url(#inbound)"/>
-    <text x="110" y="372" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">HSP_ACCT_DX_LIST</text>
-    <text x="110" y="386" text-anchor="middle" fill="#cbd5e1" font-size="9">22,500 diagnoses</text>
+    <rect x="20" y="296" width="180" height="44" rx="6" fill="url(#clarity)"/>
+    <text x="110" y="316" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">HSP_ACCT_DX_LIST</text>
+    <text x="110" y="330" text-anchor="middle" fill="#cbd5e1" font-size="9">22,500 diagnoses</text>
+  </g>
+
+  <!-- ═══════════ INBOUND: STRATA TABLE ═══════════ -->
+  <g filter="url(#shadow)">
+    <rect x="20" y="394" width="180" height="44" rx="6" fill="url(#strata)"/>
+    <text x="110" y="414" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">STRATA_BUDGET</text>
+    <text x="110" y="428" text-anchor="middle" fill="#a7f3d0" font-size="9">300 budget rows</text>
+  </g>
+
+  <!-- ═══════════ INBOUND: WORKDAY TABLE ═══════════ -->
+  <g filter="url(#shadow)">
+    <rect x="20" y="472" width="180" height="44" rx="6" fill="url(#workday)"/>
+    <text x="110" y="492" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">WORKDAY_PURCHASES</text>
+    <text x="110" y="506" text-anchor="middle" fill="#ddd6fe" font-size="9">2,000 purchase orders</text>
   </g>
 
   <!-- ═══════════ CORE_DATA BOXES ═══════════ -->
   <g filter="url(#shadow)">
-    <rect x="350" y="80" width="180" height="44" rx="6" fill="url(#curated)"/>
-    <text x="440" y="100" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">DIM_PATIENT</text>
-    <text x="440" y="114" text-anchor="middle" fill="#bfdbfe" font-size="9">Patient demographics</text>
+    <rect x="360" y="80" width="180" height="44" rx="6" fill="url(#core)"/>
+    <text x="450" y="100" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">DIM_PATIENT</text>
+    <text x="450" y="114" text-anchor="middle" fill="#bfdbfe" font-size="9">Patient demographics</text>
   </g>
   <g filter="url(#shadow)">
-    <rect x="350" y="148" width="180" height="44" rx="6" fill="url(#curated)"/>
-    <text x="440" y="168" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">DIM_PROVIDER</text>
-    <text x="440" y="182" text-anchor="middle" fill="#bfdbfe" font-size="9">Provider directory</text>
+    <rect x="360" y="134" width="180" height="44" rx="6" fill="url(#core)"/>
+    <text x="450" y="154" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">DIM_PROVIDER</text>
+    <text x="450" y="168" text-anchor="middle" fill="#bfdbfe" font-size="9">Provider directory</text>
   </g>
   <g filter="url(#shadow)">
-    <rect x="350" y="216" width="180" height="44" rx="6" fill="url(#curated)"/>
-    <text x="440" y="236" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">FACT_ENCOUNTER</text>
-    <text x="440" y="250" text-anchor="middle" fill="#bfdbfe" font-size="9">Visit details + provider</text>
+    <rect x="360" y="188" width="180" height="44" rx="6" fill="url(#core)"/>
+    <text x="450" y="208" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">FACT_ENCOUNTER</text>
+    <text x="450" y="222" text-anchor="middle" fill="#bfdbfe" font-size="9">Visit details + provider</text>
   </g>
   <g filter="url(#shadow)">
-    <rect x="350" y="284" width="180" height="44" rx="6" fill="url(#curated)"/>
-    <text x="440" y="304" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">FACT_ORDER</text>
-    <text x="440" y="318" text-anchor="middle" fill="#bfdbfe" font-size="9">Lab orders + encounter</text>
+    <rect x="360" y="242" width="180" height="44" rx="6" fill="url(#core)"/>
+    <text x="450" y="262" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">FACT_ORDER</text>
+    <text x="450" y="276" text-anchor="middle" fill="#bfdbfe" font-size="9">Lab orders + encounter</text>
   </g>
   <g filter="url(#shadow)">
-    <rect x="350" y="352" width="180" height="44" rx="6" fill="url(#curated)"/>
-    <text x="440" y="372" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">FACT_DIAGNOSIS</text>
-    <text x="440" y="386" text-anchor="middle" fill="#bfdbfe" font-size="9">Dx codes + encounter</text>
+    <rect x="360" y="296" width="180" height="44" rx="6" fill="url(#core)"/>
+    <text x="450" y="316" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">FACT_DIAGNOSIS</text>
+    <text x="450" y="330" text-anchor="middle" fill="#bfdbfe" font-size="9">Dx codes + encounter</text>
   </g>
 
   <!-- ═══════════ DATAMARTS BOXES ═══════════ -->
   <g filter="url(#shadow)">
-    <rect x="690" y="116" width="250" height="54" rx="6" fill="url(#gold)"/>
-    <text x="815" y="139" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">DEPARTMENT_DASHBOARD</text>
-    <text x="815" y="155" text-anchor="middle" fill="#fde68a" font-size="9">Volumes, charges, LOS by dept</text>
+    <rect x="710" y="110" width="250" height="58" rx="6" fill="url(#datamarts)"/>
+    <text x="835" y="133" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">DEPARTMENT_DASHBOARD</text>
+    <text x="835" y="149" text-anchor="middle" fill="#fde68a" font-size="9">Clarity + Strata + Workday</text>
+    <text x="835" y="161" text-anchor="middle" fill="#fde68a" font-size="8">Volumes, charges, budget, purchases</text>
   </g>
   <g filter="url(#shadow)">
-    <rect x="690" y="210" width="250" height="54" rx="6" fill="url(#gold)"/>
-    <text x="815" y="233" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">ED_THROUGHPUT</text>
-    <text x="815" y="249" text-anchor="middle" fill="#fde68a" font-size="9">ED visits, wait times, Dx detail</text>
+    <rect x="710" y="200" width="250" height="54" rx="6" fill="url(#datamarts)"/>
+    <text x="835" y="223" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">ED_THROUGHPUT</text>
+    <text x="835" y="239" text-anchor="middle" fill="#fde68a" font-size="9">ED visits, wait times, Dx detail</text>
   </g>
   <g filter="url(#shadow)">
-    <rect x="690" y="304" width="250" height="54" rx="6" fill="url(#gold)"/>
-    <text x="815" y="327" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">READMISSION_RISK</text>
-    <text x="815" y="343" text-anchor="middle" fill="#fde68a" font-size="9">30-day readmission flags</text>
+    <rect x="710" y="286" width="250" height="54" rx="6" fill="url(#datamarts)"/>
+    <text x="835" y="309" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">READMISSION_RISK</text>
+    <text x="835" y="325" text-anchor="middle" fill="#fde68a" font-size="9">30-day readmission flags</text>
   </g>
 
   <!-- ═══════════ ARROWS: INBOUND → CORE_DATA ═══════════ -->
-  <!-- PATIENT → DIM_PATIENT -->
-  <line x1="200" y1="102" x2="348" y2="102" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
-
-  <!-- CLARITY_SER → DIM_PROVIDER -->
-  <line x1="200" y1="238" x2="348" y2="170" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
-
-  <!-- PAT_ENC → FACT_ENCOUNTER -->
-  <line x1="200" y1="170" x2="348" y2="232" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
-  <!-- CLARITY_SER → FACT_ENCOUNTER -->
-  <line x1="200" y1="244" x2="348" y2="244" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
-
-  <!-- ORDER_PROC → FACT_ORDER -->
-  <line x1="200" y1="306" x2="348" y2="306" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
-  <!-- PAT_ENC → FACT_ORDER -->
-  <line x1="200" y1="180" x2="348" y2="296" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
-
-  <!-- HSP_ACCT_DX_LIST → FACT_DIAGNOSIS -->
-  <line x1="200" y1="374" x2="348" y2="374" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
-  <!-- PAT_ENC → FACT_DIAGNOSIS -->
-  <line x1="200" y1="186" x2="348" y2="364" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
+  <line x1="200" y1="102" x2="358" y2="102" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
+  <line x1="200" y1="210" x2="358" y2="156" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
+  <line x1="200" y1="156" x2="358" y2="204" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
+  <line x1="200" y1="216" x2="358" y2="216" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
+  <line x1="200" y1="264" x2="358" y2="264" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
+  <line x1="200" y1="166" x2="358" y2="254" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
+  <line x1="200" y1="318" x2="358" y2="318" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
+  <line x1="200" y1="172" x2="358" y2="308" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
 
   <!-- ═══════════ ARROWS: CORE_DATA → DATAMARTS ═══════════ -->
-  <!-- FACT_ENCOUNTER → DEPARTMENT_DASHBOARD -->
-  <line x1="530" y1="238" x2="688" y2="143" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.5"/>
+  <line x1="540" y1="210" x2="708" y2="139" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrowGold)" opacity="0.5"/>
+  <line x1="540" y1="210" x2="708" y2="221" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrowGold)" opacity="0.5"/>
+  <line x1="540" y1="102" x2="708" y2="215" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrowGold)" opacity="0.5"/>
+  <line x1="540" y1="318" x2="708" y2="233" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrowGold)" opacity="0.5"/>
+  <line x1="540" y1="216" x2="708" y2="307" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrowGold)" opacity="0.5"/>
+  <line x1="540" y1="108" x2="708" y2="301" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrowGold)" opacity="0.5"/>
 
-  <!-- FACT_ENCOUNTER → ED_THROUGHPUT -->
-  <line x1="530" y1="238" x2="688" y2="231" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.5"/>
-  <!-- DIM_PATIENT → ED_THROUGHPUT -->
-  <line x1="530" y1="102" x2="688" y2="225" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.5"/>
-  <!-- FACT_DIAGNOSIS → ED_THROUGHPUT -->
-  <line x1="530" y1="374" x2="688" y2="243" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.5"/>
-
-  <!-- FACT_ENCOUNTER → READMISSION_RISK (self-join) -->
-  <line x1="530" y1="244" x2="688" y2="325" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.5"/>
-  <!-- DIM_PATIENT → READMISSION_RISK -->
-  <line x1="530" y1="108" x2="688" y2="319" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.5"/>
+  <!-- ═══════════ ARROWS: STRATA/WORKDAY → DEPARTMENT_DASHBOARD ═══════════ -->
+  <line x1="200" y1="416" x2="708" y2="145" stroke="#6ee7b7" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#arrowGold)" opacity="0.5"/>
+  <line x1="200" y1="494" x2="708" y2="155" stroke="#c4b5fd" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#arrowGold)" opacity="0.5"/>
 
   <!-- ═══════════ LEGEND ═══════════ -->
-  <rect x="20" y="430" width="920" height="70" rx="8" fill="#1e293b" opacity="0.6"/>
-  <text x="40" y="456" fill="#94a3b8" font-size="10" font-weight="600" letter-spacing="1">HOW TO READ THIS DIAGRAM</text>
-  <rect x="40" y="468" width="12" height="12" rx="2" fill="url(#inbound)"/>
-  <text x="58" y="479" fill="#cbd5e1" font-size="10">Source tables (loaded by setup script)</text>
-  <rect x="300" y="468" width="12" height="12" rx="2" fill="url(#curated)"/>
-  <text x="318" y="479" fill="#bfdbfe" font-size="10">Curated dynamic tables (auto-refresh)</text>
-  <rect x="600" y="468" width="12" height="12" rx="2" fill="url(#gold)"/>
-  <text x="618" y="479" fill="#fde68a" font-size="10">Gold reporting dashboards (auto-refresh)</text>
-  <line x1="40" y1="492" x2="70" y2="492" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
-  <text x="78" y="496" fill="#94a3b8" font-size="10">Arrows show data flow &amp; join dependencies</text>
+  <rect x="20" y="540" width="980" height="65" rx="8" fill="#1e293b" opacity="0.6"/>
+  <text x="40" y="562" fill="#94a3b8" font-size="10" font-weight="600" letter-spacing="1">SOURCE SYSTEMS</text>
+  <rect x="40" y="572" width="12" height="12" rx="2" fill="url(#clarity)"/>
+  <text x="58" y="583" fill="#cbd5e1" font-size="10">Epic Clarity (Snowlift)</text>
+  <rect x="230" y="572" width="12" height="12" rx="2" fill="url(#strata)"/>
+  <text x="248" y="583" fill="#a7f3d0" font-size="10">Strata (Connectors)</text>
+  <rect x="410" y="572" width="12" height="12" rx="2" fill="url(#workday)"/>
+  <text x="428" y="583" fill="#ddd6fe" font-size="10">Workday (Connectors)</text>
+
+  <text x="620" y="562" fill="#94a3b8" font-size="10" font-weight="600" letter-spacing="1">LAYERS</text>
+  <rect x="620" y="572" width="12" height="12" rx="2" fill="url(#core)"/>
+  <text x="638" y="583" fill="#bfdbfe" font-size="10">Core Data (auto-refresh)</text>
+  <rect x="810" y="572" width="12" height="12" rx="2" fill="url(#datamarts)"/>
+  <text x="828" y="583" fill="#fde68a" font-size="10">Datamarts (auto-refresh)</text>
 </svg>
