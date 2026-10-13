@@ -324,81 +324,7 @@ SELECT * FROM BUH_HOL.DATAMARTS.READMISSION_RISK ORDER BY DAYS_BETWEEN;
 
 
 -- ============================================================
--- PART E: Watch it refresh - the "aha moment"
--- ============================================================
-
--- A new patient arrives in the ED. In production, your extraction tools
--- would upsert this into INBOUND from Clarity. We simulate it here.
-
--- New patient
-INSERT INTO BUH_HOL.INBOUND.PATIENT
-  (PAT_ID,PAT_MRN_ID,PAT_FIRST_NAME,PAT_LAST_NAME,BIRTH_DATE,SSN,
-   ADD_LINE_1,CITY,STATE_ABBR,ZIP,HOME_PHONE,EMAIL_ADDRESS,LANGUAGE,SEX)
-VALUES
-  ('P200001','MRN-900001','jorge','medina','1958-11-20','111-00-2222',
-   '650 Elmwood Ave','Providence','RI','02907','4015550116','jmedina@example.com','Spanish','Male');
-
--- New ED encounter
-INSERT INTO BUH_HOL.INBOUND.PAT_ENC
-  (PAT_ENC_CSN_ID,PAT_ID,ENC_TYPE_C,CONTACT_DATE,HOSP_ADMSN_TIME,HOSP_DISCH_TIME,
-   DEPARTMENT_ID,DEPARTMENT_NAME,VISIT_PROV_ID,ACCT_BASECLS_HA,ENC_CLOSED_YN)
-VALUES
-  ('E200026','P200001',3,'2024-11-28','2024-11-28 14:30:00','2024-11-28 20:15:00',
-   1003,'Emergency Department','PROV-003',5800.00,'Y');
-
--- Diagnosis for the encounter
-INSERT INTO BUH_HOL.INBOUND.HSP_ACCT_DX_LIST VALUES
-  ('E200026',1,'DX031','I63.9','Cerebral infarction unspecified');
-
--- Lab order
-INSERT INTO BUH_HOL.INBOUND.ORDER_PROC
-  (ORDER_PROC_ID,PAT_ENC_CSN_ID,PAT_ID,PROC_CODE,DESCRIPTION,
-   ORD_VALUE,RESULT_UNIT,REFERENCE_LOW,REFERENCE_HIGH,RESULT_FLAG_C,RESULT_DATE)
-VALUES
-  ('OP029','E200026','P200001','TROP','Troponin I',
-   0.15,'ng/mL',0.00,0.04,1,'2024-11-28 15:00:00');
-
--- *** Wait ~1 minute for dynamic tables to refresh ***
-
--- Check the CORE_DATA layer - new patient should appear
-SELECT * FROM BUH_HOL.CORE_DATA.DIM_PATIENT WHERE PAT_ID = 'P200001';
-
--- Check DATAMARTS - the ED throughput dashboard should include the new visit
-SELECT * FROM BUH_HOL.DATAMARTS.ED_THROUGHPUT WHERE PAT_ID = 'P200001';
-
--- Check the department dashboard - ED numbers should have increased
-SELECT * FROM BUH_HOL.DATAMARTS.DEPARTMENT_DASHBOARD
-WHERE DEPARTMENT_NAME = 'Emergency Department';
-
-
--- ============================================================
--- PART F: Monitor pipeline health
--- ============================================================
-
--- Refresh history - see every refresh that has run
-SELECT
-    NAME,
-    STATE,
-    STATE_MESSAGE,
-    REFRESH_START_TIME,
-    REFRESH_END_TIME,
-    DATEDIFF('second', REFRESH_START_TIME, REFRESH_END_TIME) AS REFRESH_SECONDS
-FROM TABLE(INFORMATION_SCHEMA.DYNAMIC_TABLE_REFRESH_HISTORY())
-ORDER BY REFRESH_START_TIME DESC
-LIMIT 20;
-
--- Pipeline graph - see all dynamic tables and their status
-SELECT
-    NAME,
-    TARGET_LAG,
-    SCHEDULING_STATE
-FROM TABLE(INFORMATION_SCHEMA.DYNAMIC_TABLE_GRAPH_HISTORY())
-WHERE DATABASE_NAME = 'BUH_HOL'
-ORDER BY NAME;
-
-
--- ============================================================
--- PART G: Streams + Tasks — event-driven complement
+-- PART E: Streams + Tasks — event-driven complement
 -- ============================================================
 
 -- Dynamic tables are DECLARATIVE: "here is the result I want."
@@ -408,8 +334,8 @@ ORDER BY NAME;
 -- Use streams + tasks for: audit logging, notifications, triggering
 --   external systems, complex CDC patterns with side effects
 --
--- Below we create a stream that captures changes to the PATIENT table
--- and a task that logs new patient arrivals into an audit table.
+-- We set up the stream and task BEFORE inserting new data (Part F)
+-- so the stream is watching when the insert lands.
 
 -- Audit log table
 CREATE OR REPLACE TABLE BUH_HOL.GOVERNANCE.PATIENT_AUDIT_LOG (
@@ -452,11 +378,83 @@ ALTER TASK BUH_HOL.INBOUND.LOG_PATIENT_CHANGES RESUME;
 SHOW STREAMS IN SCHEMA BUH_HOL.INBOUND;
 SHOW TASKS IN SCHEMA BUH_HOL.INBOUND;
 
--- At this point, when you inserted Jorge Medina in Part E, the stream
--- captured that change. The task will pick it up on its next run.
--- Wait ~1 minute, then check the audit log:
 
+-- ============================================================
+-- PART F: Watch it refresh - the "aha moment"
+-- ============================================================
+
+-- A new patient arrives in the ED. In production, your extraction tools
+-- would upsert this into INBOUND from Clarity. We simulate it here.
+-- The stream is already watching — it will capture this insert.
+
+-- New patient
+INSERT INTO BUH_HOL.INBOUND.PATIENT
+  (PAT_ID,PAT_MRN_ID,PAT_FIRST_NAME,PAT_LAST_NAME,BIRTH_DATE,SSN,
+   ADD_LINE_1,CITY,STATE_ABBR,ZIP,HOME_PHONE,EMAIL_ADDRESS,LANGUAGE,SEX)
+VALUES
+  ('P200001','MRN-900001','jorge','medina','1958-11-20','111-00-2222',
+   '650 Elmwood Ave','Providence','RI','02907','4015550116','jmedina@example.com','Spanish','Male');
+
+-- New ED encounter
+INSERT INTO BUH_HOL.INBOUND.PAT_ENC
+  (PAT_ENC_CSN_ID,PAT_ID,ENC_TYPE_C,CONTACT_DATE,HOSP_ADMSN_TIME,HOSP_DISCH_TIME,
+   DEPARTMENT_ID,DEPARTMENT_NAME,VISIT_PROV_ID,ACCT_BASECLS_HA,ENC_CLOSED_YN)
+VALUES
+  ('E200026','P200001',3,'2024-11-28','2024-11-28 14:30:00','2024-11-28 20:15:00',
+   1003,'Emergency Department','PROV-003',5800.00,'Y');
+
+-- Diagnosis for the encounter
+INSERT INTO BUH_HOL.INBOUND.HSP_ACCT_DX_LIST VALUES
+  ('E200026',1,'DX031','I63.9','Cerebral infarction unspecified');
+
+-- Lab order
+INSERT INTO BUH_HOL.INBOUND.ORDER_PROC
+  (ORDER_PROC_ID,PAT_ENC_CSN_ID,PAT_ID,PROC_CODE,DESCRIPTION,
+   ORD_VALUE,RESULT_UNIT,REFERENCE_LOW,REFERENCE_HIGH,RESULT_FLAG_C,RESULT_DATE)
+VALUES
+  ('OP029','E200026','P200001','TROP','Troponin I',
+   0.15,'ng/mL',0.00,0.04,1,'2024-11-28 15:00:00');
+
+-- *** Wait ~1 minute for dynamic tables to refresh ***
+
+-- Check the CORE_DATA layer - new patient should appear
+SELECT * FROM BUH_HOL.CORE_DATA.DIM_PATIENT WHERE PAT_ID = 'P200001';
+
+-- Check DATAMARTS - the ED throughput dashboard should include the new visit
+SELECT * FROM BUH_HOL.DATAMARTS.ED_THROUGHPUT WHERE PAT_ID = 'P200001';
+
+-- Check the department dashboard - ED numbers should have increased
+SELECT * FROM BUH_HOL.DATAMARTS.DEPARTMENT_DASHBOARD
+WHERE DEPARTMENT_NAME = 'Emergency Department';
+
+-- Check the audit log - the stream + task should have captured the insert
 SELECT * FROM BUH_HOL.GOVERNANCE.PATIENT_AUDIT_LOG ORDER BY LOGGED_AT DESC;
+
+
+-- ============================================================
+-- PART G: Monitor pipeline health
+-- ============================================================
+
+-- Refresh history - see every refresh that has run
+SELECT
+    NAME,
+    STATE,
+    STATE_MESSAGE,
+    REFRESH_START_TIME,
+    REFRESH_END_TIME,
+    DATEDIFF('second', REFRESH_START_TIME, REFRESH_END_TIME) AS REFRESH_SECONDS
+FROM TABLE(INFORMATION_SCHEMA.DYNAMIC_TABLE_REFRESH_HISTORY())
+ORDER BY REFRESH_START_TIME DESC
+LIMIT 20;
+
+-- Pipeline graph - see all dynamic tables and their status
+SELECT
+    NAME,
+    TARGET_LAG,
+    SCHEDULING_STATE
+FROM TABLE(INFORMATION_SCHEMA.DYNAMIC_TABLE_GRAPH_HISTORY())
+WHERE DATABASE_NAME = 'BUH_HOL'
+ORDER BY NAME;
 
 
 -- ============================================================
@@ -501,7 +499,7 @@ SELECT * FROM BUH_HOL.GOVERNANCE.PATIENT_AUDIT_LOG ORDER BY LOGGED_AT DESC;
 --   - ED throughput now includes the new visit
 --   - Refresh history showing successful runs
 --   - Stream PATIENT_CHANGES and Task LOG_PATIENT_CHANGES active
---   - Audit log captures Jorge Medina's arrival
+--   - Jorge Medina's arrival captured in the audit log
 
 SELECT 'CORE_DATA.DIM_PATIENT' AS DT, COUNT(*) AS ROWS FROM BUH_HOL.CORE_DATA.DIM_PATIENT
 UNION ALL SELECT 'CORE_DATA.DIM_PROVIDER', COUNT(*) FROM BUH_HOL.CORE_DATA.DIM_PROVIDER

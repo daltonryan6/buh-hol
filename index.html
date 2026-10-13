@@ -518,21 +518,47 @@ table and show me a few sample rows from each.</pre>
             <strong>REFRESH_MODE best practices:</strong> Use <strong>INCREMENTAL</strong> for simple projections, filters, and joins &mdash; it processes only changed rows and is the most cost-efficient. Use <strong>ADAPTIVE</strong> when upstream tables may receive bulk reloads (e.g., from extraction tools or INSERT OVERWRITE) &mdash; it auto-reinitializes then resumes incremental. Use <strong>FULL</strong> for heavy aggregations where a predictable full rebuild is simpler than tracking changes. Avoid non-deterministic functions like <code>CURRENT_DATE()</code> in dynamic table definitions &mdash; they prevent incremental refresh. Always set <code>REFRESH_MODE</code> explicitly; don't rely on <code>AUTO</code> in production.
           </div>
 
-          <h3>2.4 Watch it refresh &ndash; the &ldquo;aha moment&rdquo;</h3>
-          <p>A new patient arrives in the ED with a stroke. Insert the data (simulating what your extraction tools would do) and watch it cascade through all layers:</p>
+          <h3>2.4 Streams + Tasks &mdash; event-driven complement</h3>
+          <p>Dynamic tables are <strong>declarative</strong> &mdash; you define the result, Snowflake handles refresh. But some workflows need <strong>imperative</strong> event-driven logic: audit logging, notifications, triggering external systems. That&rsquo;s where Streams + Tasks come in.</p>
+          <p>A <strong>Stream</strong> captures row-level changes (inserts, updates, deletes) on a table. A <strong>Task</strong> runs SQL on a schedule &mdash; or only when a stream has data. Together they give you CDC-triggered side effects.</p>
+          <div class="code-block">
+            <div class="code-header"><span>CoCo Prompt &ndash; Streams + Tasks audit log</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
+            <pre>Run Part E of scripts/02_dynamic_tables.sql — the Streams + Tasks section.
+
+It creates a STREAM on INBOUND.PATIENT that captures changes, an audit log
+table in the GOVERNANCE schema, and a TASK that runs every minute to log
+new patient arrivals.
+
+After everything is created, show me the stream and task status.</pre>
+          </div>
+          <div class="callout callout-info">
+            <strong>What&rsquo;s happening:</strong> The stream is now watching INBOUND.PATIENT for any inserts, updates, or deletes. The task checks every minute &mdash; when the stream has data, it automatically logs the change to the audit table. No scheduling code needed. In the next step, we'll insert a new patient and see both the dynamic tables AND the audit log react.
+          </div>
+
+          <table>
+            <tr><th>Pattern</th><th>How it works</th><th>Best for</th></tr>
+            <tr><td>Dynamic Tables</td><td>Declare the result &mdash; Snowflake figures out when and how to refresh</td><td>Transformations, dimensional models, aggregations</td></tr>
+            <tr><td>Streams + Tasks</td><td>Capture changes, trigger actions on a schedule or when data arrives</td><td>Audit logs, notifications, complex CDC with side effects</td></tr>
+          </table>
+
+          <h3>2.5 Watch it refresh &ndash; the &ldquo;aha moment&rdquo;</h3>
+          <p>A new patient arrives in the ED with a stroke. Insert the data (simulating what your extraction tools would do) and watch it cascade through all layers &mdash; <strong>and</strong> get logged by the stream + task audit pipeline:</p>
           <div class="code-block">
             <div class="code-header"><span>SQL &ndash; New ED patient</span><button class="copy-btn">📋 Copy</button></div>
             <pre>-- Insert new patient, encounter, diagnosis, and lab order
--- (Run Part E in the script)
+-- (Run Part F in the script)
 
--- Wait ~1 minute, then verify:
+-- Wait ~1 minute, then verify dynamic tables refreshed:
 SELECT * FROM BUH_HOL.CORE_DATA.DIM_PATIENT WHERE PAT_ID = 'P200001';
 SELECT * FROM BUH_HOL.DATAMARTS.ED_THROUGHPUT WHERE PAT_ID = 'P200001';
 SELECT * FROM BUH_HOL.DATAMARTS.DEPARTMENT_DASHBOARD
-  WHERE DEPARTMENT_NAME = 'Emergency Department';</pre>
+  WHERE DEPARTMENT_NAME = 'Emergency Department';
+
+-- And check the audit log — the stream + task should have captured it:
+SELECT * FROM BUH_HOL.GOVERNANCE.PATIENT_AUDIT_LOG ORDER BY LOGGED_AT DESC;</pre>
           </div>
 
-          <h3>2.5 Monitor pipeline health</h3>
+          <h3>2.6 Monitor pipeline health</h3>
           <div class="code-block">
             <div class="code-header"><span>SQL &ndash; Refresh history</span><button class="copy-btn">📋 Copy</button></div>
             <pre>SELECT NAME, STATE, REFRESH_START_TIME,
@@ -542,33 +568,8 @@ ORDER BY REFRESH_START_TIME DESC LIMIT 15;</pre>
           </div>
 
           <div class="callout callout-info">
-            <strong>TARGET_LAG guidance:</strong> 1 minute = ED throughput / real-time clinical. 15 minutes = operational reporting. 1 hour = standard analytics. DOWNSTREAM = refresh only when needed. Louis reported: DTs used similar credits to the existing ETL but saved significant engineering time &ndash; the value is in the orchestration code you no longer maintain.
+            <strong>TARGET_LAG guidance:</strong> 1 minute = ED throughput / real-time clinical. 15 minutes = operational reporting. 1 hour = standard analytics. DOWNSTREAM = refresh only when needed.
           </div>
-
-          <h3>2.6 Streams + Tasks &mdash; event-driven complement</h3>
-          <p>Dynamic tables are <strong>declarative</strong> &mdash; you define the result, Snowflake handles refresh. But some workflows need <strong>imperative</strong> event-driven logic: audit logging, notifications, triggering external systems. That&rsquo;s where Streams + Tasks come in.</p>
-          <p>A <strong>Stream</strong> captures row-level changes (inserts, updates, deletes) on a table. A <strong>Task</strong> runs SQL on a schedule &mdash; or only when a stream has data. Together they give you CDC-triggered side effects.</p>
-          <div class="code-block">
-            <div class="code-header"><span>CoCo Prompt &ndash; Streams + Tasks audit log</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
-            <pre>Run Part G of scripts/02_dynamic_tables.sql — the Streams + Tasks section.
-
-It creates a STREAM on INBOUND.PATIENT that captures changes, an audit log
-table in the GOVERNANCE schema, and a TASK that runs every minute to log
-new patient arrivals.
-
-After everything is created, show me the stream and task status.
-Then check the audit log — Jorge Medina's insert from the aha moment
-should appear there. If it hasn't arrived yet, wait a minute and check again.</pre>
-          </div>
-          <div class="callout callout-info">
-            <strong>What&rsquo;s happening:</strong> The stream on INBOUND.PATIENT captured the Jorge Medina insert from Step 2.6. The task's <code>WHEN SYSTEM$STREAM_HAS_DATA()</code> clause detected the change and logged it to the audit table &mdash; automatically, with no scheduling code. In production, streams + tasks handle audit trails, compliance logging, and triggering extraction tools reloads.
-          </div>
-
-          <table>
-            <tr><th>Pattern</th><th>How it works</th><th>Best for</th></tr>
-            <tr><td>Dynamic Tables</td><td>Declare the result &mdash; Snowflake figures out when and how to refresh</td><td>Transformations, dimensional models, aggregations</td></tr>
-            <tr><td>Streams + Tasks</td><td>Capture changes, trigger actions on a schedule or when data arrives</td><td>Audit logs, notifications, complex CDC with side effects</td></tr>
-          </table>
 
           <div class="checkpoint">
             <h4>Checkpoint</h4>
