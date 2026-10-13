@@ -1,6 +1,6 @@
 /*=============================================================================
   Brown University Health - Hands-On Lab
-  Script 00: Setup - Database, Schemas, Roles, Epic Clarity Source Data
+  Script 01: Setup - Database, Schemas, Roles, and Source Data
 
   PREREQUISITES:
     - Snowflake trial or existing account with ACCOUNTADMIN
@@ -23,7 +23,7 @@
     - WORKDAY_PURCHASES:2,000 generated POs (Workday Procurement)
 
   NOTE: INBOUND tables mirror three source systems:
-        - Epic Clarity (via your extraction tools)
+        - Epic Clarity (via extraction/replication tools)
         - Strata Decision Support (via connectors)
         - Workday Procurement (via connectors)
 
@@ -83,7 +83,7 @@ GRANT SELECT ON FUTURE VIEWS IN DATABASE BUH_HOL TO ROLE BUH_LAB_CLINICIAN;
 -- ============================================================
 -- 3. INBOUND LAYER - Simulated Epic Clarity Extracts
 --    These use Clarity naming conventions. In production,
---    your extraction tools would stage these from SQL Server.
+--    In production, extraction tools stage these from SQL Server.
 -- ============================================================
 USE SCHEMA BUH_HOL.INBOUND;
 

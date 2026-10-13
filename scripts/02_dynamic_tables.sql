@@ -21,7 +21,7 @@ USE ROLE ACCOUNTADMIN;
 -- PART A: The problem - manual pipelines
 -- ============================================================
 
--- Today, your team runs a series of scheduled SQL transformations:
+-- A typical manual pipeline involves scheduled SQL transformations:
 --   1. Read from INBOUND (raw Clarity extracts)
 --   2. Clean, join, and model into curated tables
 --   3. Aggregate into gold reporting tables
@@ -38,7 +38,7 @@ USE ROLE ACCOUNTADMIN;
 -- ============================================================
 -- These dynamic tables transform messy Clarity source data into
 -- a clean star schema. Each one reads from INBOUND and applies
--- business logic that your existing ETL handles today.
+-- business logic that scheduled ETL handles today.
 
 -- DIM_PATIENT: Clean demographics from Clarity PATIENT table
 -- Note: Clarity stores names in mixed case, phones without formatting
@@ -383,8 +383,8 @@ SHOW TASKS IN SCHEMA BUH_HOL.INBOUND;
 -- PART F: Watch it refresh - the "aha moment"
 -- ============================================================
 
--- A new patient arrives in the ED. In production, your extraction tools
--- would upsert this into INBOUND from Clarity. We simulate it here.
+-- A new patient arrives in the ED. In production, extraction tools
+-- upsert this into INBOUND from Clarity. We simulate it here.
 -- The stream is already watching — it will capture this insert.
 
 -- New patient
@@ -481,9 +481,8 @@ ORDER BY NAME;
 -- The combination of TARGET_LAG + REFRESH_MODE gives you fine-grained
 -- control over freshness vs. cost. In production, set both explicitly.
 --
--- Louis reported: Dynamic Tables used about the same credits as
--- the existing ETL but saved significant engineering time. The
--- value is not in cheaper compute — it is in the orchestration,
+-- Dynamic tables typically use similar credits to equivalent ETL jobs,
+-- but the value is not in cheaper compute — it is in the orchestration,
 -- monitoring, and error-handling code you no longer need to maintain.
 
 -- ============================================================

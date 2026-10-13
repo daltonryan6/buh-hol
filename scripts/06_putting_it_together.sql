@@ -1,6 +1,6 @@
 /*=============================================================================
   Brown University Health - Hands-On Lab
-  Script 05: Putting It All Together
+  Script 06: Putting It All Together
 
   GOAL: Verify the end-to-end pipeline and discuss next steps.
   TIME: ~15 minutes
@@ -14,11 +14,11 @@ USE ROLE ACCOUNTADMIN;
 -- Architecture you built today
 -- ============================================================
 
--- [Epic Clarity SQL Server]
---        |
---        | your extraction tools (simulated by 01_setup.sql)
---        v
--- INBOUND schema (Clarity table names: PATIENT, PAT_ENC, CLARITY_SER, ORDER_PROC, HSP_ACCT_DX_LIST)
+-- [Epic Clarity SQL Server]  [Strata]  [Workday]
+--        |                      |          |
+--        | Extraction tools      | Connectors
+--        v                      v          v
+-- INBOUND schema (PATIENT, PAT_ENC, CLARITY_SER, ORDER_PROC, HSP_ACCT_DX_LIST, STRATA_BUDGET, WORKDAY_PURCHASES)
 --        |
 --        | Dynamic Tables auto-refresh
 --        v
@@ -68,8 +68,8 @@ ORDER BY NAME;
 --
 -- 2. DYNAMIC TABLES: Replace scheduled transformation jobs with declarative SQL.
 --    Start with one pipeline (e.g., a department dashboard) and set TARGET_LAG
---    based on business need. Louis noted DTs use similar credits to ETL but
---    save significant engineering time.
+--    based on business need. Dynamic tables typically use similar credits to
+--    equivalent ETL but eliminate orchestration and error-handling overhead.
 --
 -- 3. ICEBERG + ONELAKE: Set up an external volume pointing to OneLake.
 --    Write only DATAMARTS tables as Iceberg. Connect Power BI via Direct Lake.

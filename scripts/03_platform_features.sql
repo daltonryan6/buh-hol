@@ -23,7 +23,7 @@ USE ROLE ACCOUNTADMIN;
 -- that SHARES the same physical partitions. It's instant and free
 -- until you write to the clone (copy-on-write).
 --
--- Louis uses this for pre-production and dev environments.
+-- Zero-copy cloning is ideal for pre-production and dev environments.
 
 -- Clone the entire database — instant regardless of size
 CREATE OR REPLACE DATABASE BUH_HOL_DEV CLONE BUH_HOL;
@@ -53,7 +53,7 @@ USE DATABASE BUH_HOL;
 
 -- Resource monitors track credit consumption and can notify or
 -- suspend a warehouse when it hits a threshold. This prevents
--- runaway queries from burning through your credit allocation.
+-- runaway queries from consuming more credits than expected.
 
 CREATE OR REPLACE RESOURCE MONITOR BUH_LAB_MONITOR
     WITH CREDIT_QUOTA = 10
@@ -71,11 +71,11 @@ ALTER WAREHOUSE COMPUTE_WH SET RESOURCE_MONITOR = BUH_LAB_MONITOR;
 SHOW RESOURCE MONITORS;
 
 -- Warehouse isolation: each warehouse is independent compute.
--- Unlike a shared PBI capacity pool, one heavy ETL job can't
--- starve your BI queries — they run on separate warehouses.
+-- Unlike a shared capacity pool, one heavy ETL job cannot
+-- impact BI query performance — they run on separate warehouses.
 --
--- In production you'd have dedicated warehouses:
---   ETL_WH       — for your extraction tools loads
+-- In production, dedicated warehouses provide workload isolation:
+--   ETL_WH       — for extraction and loading
 --   ANALYTICS_WH — for Power BI / Streamlit reads
 --   DEV_WH       — for developer ad-hoc queries
 

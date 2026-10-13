@@ -1,6 +1,6 @@
 /*=============================================================================
   Brown University Health - Hands-On Lab
-  Script 04: Tags, Sensitivity Labels & Governance
+  Script 05: Tags, Sensitivity Labels & Governance
 
   GOAL: Create tags, apply them to Clarity source columns, set up
         tag-based masking, and test masking across roles.

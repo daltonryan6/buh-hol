@@ -604,7 +604,7 @@ and then drops the clone.
 Show me the row counts from both databases and the time travel result.</pre>
           </div>
           <div class="callout callout-info">
-            <strong>Why this matters:</strong> Louis uses zero-copy clones for pre-production and dev environments. Cloning a multi-TB database takes seconds, not hours. Dynamic tables in the clone auto-refresh against the cloned data. Each environment is fully isolated &mdash; no risk of dev changes hitting production.
+            <strong>Why this matters:</strong> Zero-copy cloning is ideal for pre-production and dev environments. Cloning a multi-TB database takes seconds, not hours. Dynamic tables in the clone auto-refresh against the cloned data. Each environment is fully isolated &mdash; no risk of dev changes hitting production.
           </div>
 
           <h3>3.2 Resource Monitors &amp; Warehouse Isolation</h3>
