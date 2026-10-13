@@ -325,7 +325,6 @@
           <h2>Get Started</h2>
           <div class="step-meta">
             <span class="badge badge-time">0:00 &ndash; 0:10</span>
-            <span class="badge badge-script">00_setup.sql</span>
           </div>
 
           <p>In this step, you'll set up your development environment by opening <strong>Cortex Code</strong> &mdash; Snowflake's AI-powered coding assistant &mdash; and connecting it to a GitHub repository. This gives you a fully integrated workspace where you can browse files, write code, and collaborate with AI, all without leaving Snowflake.</p>
@@ -404,13 +403,13 @@ so I can use it as a file source during this lab.
           <h2>Build the Database &amp; Load Data</h2>
           <div class="step-meta">
             <span class="badge badge-time">0:10 &ndash; 0:20</span>
-            <span class="badge badge-script">00_setup.sql</span>
+            <span class="badge badge-script">01_setup.sql</span>
           </div>
 
           <p>Now that your workspace is connected, run the setup script to build your entire lab environment in one shot.</p>
 
           <h3>1.1 Run the Setup Script</h3>
-          <p>Open <strong>scripts/00_setup.sql</strong> in your Git workspace, then click the <strong>Run All</strong> button in the top-right corner of the worksheet. This executes every statement in the file sequentially.</p>
+          <p>Open <strong>scripts/01_setup.sql</strong> in your Git workspace, then click the <strong>Run All</strong> button in the top-right corner of the worksheet. This executes every statement in the file sequentially.</p>
           <p><img alt="Run All button in worksheet" src="assets/img/run-all.png" style="max-width:600px; width:100%; border-radius:8px;"></p>
           <div class="callout callout-info">
             <strong>What's happening:</strong> The setup script creates the BUH_HOL database with INBOUND, CORE_DATA, DATAMARTS, and GOVERNANCE schemas, plus synthetic data from three source systems: Epic Clarity (patients, encounters, providers, orders, diagnoses), Strata Decision Support (department budgets), and Workday Procurement (purchase orders).

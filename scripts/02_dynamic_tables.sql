@@ -10,7 +10,7 @@
     INBOUND (Clarity extracts) --> CORE_DATA (dimensional model) --> DATAMARTS (reporting)
 
   TIME: ~40 minutes
-  PREREQUISITE: Run 00_setup.sql first
+  PREREQUISITE: Run 01_setup.sql first
 =============================================================================*/
 
 USE DATABASE BUH_HOL;

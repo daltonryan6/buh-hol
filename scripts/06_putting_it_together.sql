@@ -16,7 +16,7 @@ USE ROLE ACCOUNTADMIN;
 
 -- [Epic Clarity SQL Server]
 --        |
---        | your extraction tools (simulated by 00_setup.sql)
+--        | your extraction tools (simulated by 01_setup.sql)
 --        v
 -- INBOUND schema (Clarity table names: PATIENT, PAT_ENC, CLARITY_SER, ORDER_PROC, HSP_ACCT_DX_LIST)
 --        |

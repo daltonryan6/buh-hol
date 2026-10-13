@@ -6,7 +6,7 @@
         Iceberg table, and discuss Fabric CU cost management.
 
   TIME: ~15 minutes (one hands-on Iceberg CTAS + guided discussion)
-  PREREQUISITE: Run 00_setup.sql and 02_dynamic_tables.sql first
+  PREREQUISITE: Run 01_setup.sql and 02_dynamic_tables.sql first
 =============================================================================*/
 
 USE DATABASE BUH_HOL;

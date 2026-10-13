@@ -6,7 +6,7 @@
         tag-based masking, and test masking across roles.
 
   TIME: ~20 minutes
-  PREREQUISITE: Run 00_setup.sql and 02_dynamic_tables.sql first
+  PREREQUISITE: Run 01_setup.sql and 02_dynamic_tables.sql first
 =============================================================================*/
 
 USE DATABASE BUH_HOL;
