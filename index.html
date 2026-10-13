@@ -592,19 +592,24 @@ ORDER BY REFRESH_START_TIME DESC LIMIT 15;</pre>
 
           <p>Your pipeline is running. Now let's explore platform features that complement it: instant environment cloning, cost controls, query caching, custom functions, and AI/ML.</p>
 
-          <h3>3.1 Zero-Copy Cloning</h3>
-          <p>Snowflake stores data as immutable micro-partitions (columnar, compressed). A clone creates a metadata-only copy that shares physical storage &mdash; it's instant and free until you write to the clone.</p>
+          <h3>3.1 Zero-Copy Cloning + Time Travel Recovery</h3>
+          <p>Snowflake stores data as immutable micro-partitions (columnar, compressed). A clone creates a metadata-only copy that shares physical storage &mdash; it's instant and free until you write to the clone. Combined with time travel, this means even catastrophic mistakes are recoverable.</p>
           <div class="code-block">
-            <div class="code-header"><span>CoCo Prompt &ndash; Zero-copy clone</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
-            <pre>Run Part A of scripts/03_platform_features.sql. It clones the entire
-BUH_HOL database to BUH_HOL_DEV, queries both to prove they match,
-shows the dynamic tables in the clone, demonstrates time travel,
-and then drops the clone.
+            <div class="code-header"><span>CoCo Prompt &ndash; Clone, break it, recover</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
+            <pre>Run Part A of scripts/03_platform_features.sql step by step.
 
-Show me the row counts from both databases and the time travel result.</pre>
+It tells a story in 5 steps:
+1. Clone BUH_HOL to BUH_HOL_DEV (instant, full copy)
+2. Simulate an accident: DELETE all patients from the dev clone
+3. Use time travel to see the data as it existed before the mistake
+4. Recover by inserting the time-travel data back into the table
+5. Verify both PROD and DEV are back to 100 patients, then drop the clone
+
+Run each step and show me the row counts at each stage so I can
+see the data disappear, the time travel view, and the recovery.</pre>
           </div>
           <div class="callout callout-info">
-            <strong>Why this matters:</strong> Zero-copy cloning is ideal for pre-production and dev environments. Cloning a multi-TB database takes seconds, not hours. Dynamic tables in the clone auto-refresh against the cloned data. Each environment is fully isolated &mdash; no risk of dev changes hitting production.
+            <strong>What just happened:</strong> The clone was instant (metadata-only, zero storage cost). The accidental DELETE wiped 100 patients from DEV &mdash; but production was completely untouched (clone isolation). Time travel let us query the table <em>as it existed before the mistake</em>, and a single INSERT...SELECT recovered every row. In production, Snowflake retains time travel history for 1&ndash;90 days depending on your edition.
           </div>
 
           <h3>3.2 Resource Monitors &amp; Warehouse Isolation</h3>

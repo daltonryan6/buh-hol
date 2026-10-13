@@ -15,35 +15,67 @@ USE WAREHOUSE COMPUTE_WH;
 USE ROLE ACCOUNTADMIN;
 
 -- ============================================================
--- PART A: Zero-Copy Cloning
+-- PART A: Zero-Copy Cloning + Time Travel Recovery
 -- ============================================================
 
 -- Snowflake stores data as immutable micro-partitions (columnar,
 -- compressed, ~16 MB each). A clone creates a metadata-only copy
 -- that SHARES the same physical partitions. It's instant and free
 -- until you write to the clone (copy-on-write).
---
--- Zero-copy cloning is ideal for pre-production and dev environments.
 
--- Clone the entire database — instant regardless of size
+-- ---- Step 1: Clone the database (instant, regardless of size) ----
+
 CREATE OR REPLACE DATABASE BUH_HOL_DEV CLONE BUH_HOL;
 
--- Prove it's a real copy: query it
-SELECT COUNT(*) AS DEV_ENCOUNTERS FROM BUH_HOL_DEV.CORE_DATA.FACT_ENCOUNTER;
-SELECT COUNT(*) AS PROD_ENCOUNTERS FROM BUH_HOL.CORE_DATA.FACT_ENCOUNTER;
+-- Prove it's a real, independent copy
+SELECT 'PROD' AS ENV, COUNT(*) AS PATIENTS FROM BUH_HOL.INBOUND.PATIENT
+UNION ALL
+SELECT 'DEV',        COUNT(*)              FROM BUH_HOL_DEV.INBOUND.PATIENT;
 
--- Show that the clone has its own dynamic tables
+-- The clone has its own dynamic tables, streams, and tasks
 SHOW DYNAMIC TABLES IN DATABASE BUH_HOL_DEV;
 
--- Time Travel: query data as it existed in the past
--- (works on both the original and the clone)
-SELECT COUNT(*) FROM BUH_HOL.INBOUND.PATIENT AT(OFFSET => -60);
--- ^ Returns the row count from 60 seconds ago
 
--- Clean up the clone
+-- ---- Step 2: Simulate an accident in the dev environment ----
+
+-- A developer meant to run: DELETE FROM PATIENT WHERE PAT_ID = 'P100099'
+-- But forgot the WHERE clause...
+DELETE FROM BUH_HOL_DEV.INBOUND.PATIENT;
+
+-- Check the damage
+SELECT 'PROD' AS ENV, COUNT(*) AS PATIENTS FROM BUH_HOL.INBOUND.PATIENT
+UNION ALL
+SELECT 'DEV',        COUNT(*)              FROM BUH_HOL_DEV.INBOUND.PATIENT;
+-- DEV shows 0 patients. Production is untouched (clone isolation).
+
+
+-- ---- Step 3: Time travel — see what existed before the mistake ----
+
+-- Query the dev table as it was 30 seconds ago (before the DELETE)
+SELECT COUNT(*) AS PATIENTS_BEFORE_DELETE
+FROM BUH_HOL_DEV.INBOUND.PATIENT AT(OFFSET => -30);
+-- All 100 patients are still visible through time travel.
+
+-- Preview the lost data
+SELECT PAT_ID, PAT_FIRST_NAME, PAT_LAST_NAME
+FROM BUH_HOL_DEV.INBOUND.PATIENT AT(OFFSET => -30)
+LIMIT 10;
+
+
+-- ---- Step 4: Recover — restore the data from time travel ----
+
+INSERT INTO BUH_HOL_DEV.INBOUND.PATIENT
+SELECT * FROM BUH_HOL_DEV.INBOUND.PATIENT AT(OFFSET => -60);
+
+-- Verify full recovery
+SELECT 'PROD' AS ENV, COUNT(*) AS PATIENTS FROM BUH_HOL.INBOUND.PATIENT
+UNION ALL
+SELECT 'DEV',        COUNT(*)              FROM BUH_HOL_DEV.INBOUND.PATIENT;
+-- Both show 100 patients again.
+
+
+-- ---- Step 5: Clean up ----
 DROP DATABASE BUH_HOL_DEV;
-
--- Switch back to main database
 USE DATABASE BUH_HOL;
 
 
