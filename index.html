@@ -495,6 +495,9 @@ table and show me a few sample rows from each.</pre>
             <strong>What's happening:</strong> DATAMARTS reads from CORE_DATA (which reads INBOUND). The whole graph refreshes automatically. DEPARTMENT_DASHBOARD consolidates Clarity encounters, Strata budgets, and Workday purchases into a single department view. Notice the three different <code>TARGET_LAG</code> settings: <code>1 minute</code> for ED real-time, <code>15 minutes</code> for department reporting, and <code>DOWNSTREAM</code> for analytics that only refresh when queried.
           </div>
 
+          <p>After CoCo creates the tables, you'll see an object pill in the response. Click it to navigate directly to that object in the database explorer, where you can inspect its details, lineage graph, data quality metrics, and more.</p>
+          <p><img alt="CoCo object pill for navigating to database objects" src="assets/img/coco-object-pill.png" style="max-width:600px; width:100%; border-radius:8px;"></p>
+
           <h3>2.3 Feature summary &mdash; all 8 dynamic tables</h3>
           <p>Here's the full picture of design choices across the pipeline:</p>
           <table>
