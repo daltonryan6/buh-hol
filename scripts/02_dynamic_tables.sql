@@ -4,7 +4,7 @@
 
   GOAL: Build a multi-layer pipeline using dynamic tables that
         automatically refresh when source data changes. This replaces
-        the Snowforge-managed transformations with declarative SQL.
+        the existing scheduled transformations with declarative SQL.
 
   ARCHITECTURE:
     INBOUND (Clarity extracts) --> CORE_DATA (dimensional model) --> DATAMARTS (reporting)
@@ -21,7 +21,7 @@ USE ROLE ACCOUNTADMIN;
 -- PART A: The problem - manual pipelines
 -- ============================================================
 
--- Today, Snowforge runs a series of SQL transformations:
+-- Today, your team runs a series of scheduled SQL transformations:
 --   1. Read from INBOUND (raw Clarity extracts)
 --   2. Clean, join, and model into curated tables
 --   3. Aggregate into gold reporting tables
@@ -38,7 +38,7 @@ USE ROLE ACCOUNTADMIN;
 -- ============================================================
 -- These dynamic tables transform messy Clarity source data into
 -- a clean star schema. Each one reads from INBOUND and applies
--- business logic that Snowforge handles today.
+-- business logic that your existing ETL handles today.
 
 -- DIM_PATIENT: Clean demographics from Clarity PATIENT table
 -- Note: Clarity stores names in mixed case, phones without formatting
@@ -89,7 +89,7 @@ WHERE ACTIVE_STATUS = 'Y';
 
 -- FACT_ENCOUNTER: Join PAT_ENC with CLARITY_SER, decode type codes,
 -- compute length of stay. This is the core clinical fact table.
--- REFRESH_MODE = ADAPTIVE: handles Snowlift bulk loads gracefully by
+-- REFRESH_MODE = ADAPTIVE: handles extraction tools bulk loads gracefully by
 -- auto-reinitializing when a full table reload lands, then resuming
 -- incremental processing for normal row-by-row changes.
 CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.CORE_DATA.FACT_ENCOUNTER
@@ -327,7 +327,7 @@ SELECT * FROM BUH_HOL.DATAMARTS.READMISSION_RISK ORDER BY DAYS_BETWEEN;
 -- PART E: Watch it refresh - the "aha moment"
 -- ============================================================
 
--- A new patient arrives in the ED. In production, Snowlift/Snowloader
+-- A new patient arrives in the ED. In production, your extraction tools
 -- would upsert this into INBOUND from Clarity. We simulate it here.
 
 -- New patient
@@ -472,7 +472,7 @@ SELECT * FROM BUH_HOL.GOVERNANCE.PATIENT_AUDIT_LOG ORDER BY LOGGED_AT DESC;
 -- REFRESH_MODE controls HOW data is refreshed:
 --   INCREMENTAL  = process only changed rows (most CORE_DATA tables + READMISSION_RISK)
 --   ADAPTIVE     = incremental by default, auto-reinitializes on bulk loads
---                   (FACT_ENCOUNTER, ED_THROUGHPUT — handles Snowlift reloads)
+--                   (FACT_ENCOUNTER, ED_THROUGHPUT — handles extraction tools reloads)
 --   FULL         = reprocess everything each refresh (DEPARTMENT_DASHBOARD —
 --                   predictable cost for aggregation)
 --

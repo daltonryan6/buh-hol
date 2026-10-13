@@ -23,7 +23,7 @@
     - WORKDAY_PURCHASES:2,000 generated POs (Workday Procurement)
 
   NOTE: INBOUND tables mirror three source systems:
-        - Epic Clarity (via Snowlift/Snowloader)
+        - Epic Clarity (via your extraction tools)
         - Strata Decision Support (via connectors)
         - Workday Procurement (via connectors)
 
@@ -83,7 +83,7 @@ GRANT SELECT ON FUTURE VIEWS IN DATABASE BUH_HOL TO ROLE BUH_LAB_CLINICIAN;
 -- ============================================================
 -- 3. INBOUND LAYER - Simulated Epic Clarity Extracts
 --    These use Clarity naming conventions. In production,
---    Snowlift/Snowloader would stage these from SQL Server.
+--    your extraction tools would stage these from SQL Server.
 -- ============================================================
 USE SCHEMA BUH_HOL.INBOUND;
 

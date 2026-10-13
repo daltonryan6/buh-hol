@@ -172,7 +172,7 @@
   <rect x="20" y="540" width="980" height="65" rx="8" fill="#1e293b" opacity="0.6"/>
   <text x="40" y="562" fill="#94a3b8" font-size="10" font-weight="600" letter-spacing="1">SOURCE SYSTEMS</text>
   <rect x="40" y="572" width="12" height="12" rx="2" fill="url(#clarity)"/>
-  <text x="58" y="583" fill="#cbd5e1" font-size="10">Epic Clarity (Snowlift)</text>
+  <text x="58" y="583" fill="#cbd5e1" font-size="10">Epic Clarity (Extraction)</text>
   <rect x="230" y="572" width="12" height="12" rx="2" fill="url(#strata)"/>
   <text x="248" y="583" fill="#a7f3d0" font-size="10">Strata (Connectors)</text>
   <rect x="410" y="572" width="12" height="12" rx="2" fill="url(#workday)"/>

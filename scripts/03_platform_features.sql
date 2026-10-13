@@ -75,7 +75,7 @@ SHOW RESOURCE MONITORS;
 -- starve your BI queries — they run on separate warehouses.
 --
 -- In production you'd have dedicated warehouses:
---   ETL_WH       — for Snowlift/Snowloader loads
+--   ETL_WH       — for your extraction tools loads
 --   ANALYTICS_WH — for Power BI / Streamlit reads
 --   DEV_WH       — for developer ad-hoc queries
 

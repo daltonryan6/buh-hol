@@ -162,7 +162,7 @@
           <div class="vc-bg-icon">&#9889;</div>
           <div style="font-size:28px;margin-bottom:8px;">&#9889;</div>
           <div style="font-size:14px;font-weight:700;margin-bottom:6px;">Scripts &rarr; Declarations</div>
-          <div style="font-size:12px;opacity:0.75;line-height:1.5;">What Snowforge orchestrates today &mdash; MERGE scripts, dependency chains, error handling &mdash; becomes a single CREATE DYNAMIC TABLE statement.</div>
+          <div style="font-size:12px;opacity:0.75;line-height:1.5;">What your ETL orchestrates today &mdash; MERGE scripts, dependency chains, error handling &mdash; becomes a single CREATE DYNAMIC TABLE statement.</div>
         </div>
         <div class="value-card">
           <div class="vc-bg-icon">&#x1F512;</div>
@@ -441,7 +441,7 @@ so I can use it as a file source during this lab.
           </table>
 
           <div class="callout callout-info">
-            <strong>For your Snowforge workflow:</strong> Git workspaces give you the version control layer. Combined with dynamic tables (next step), you can replace scheduled transformation scripts with declarative SQL that auto-refreshes.
+            <strong>For your current ETL workflow:</strong> Git workspaces give you the version control layer. Combined with dynamic tables (next step), you can replace scheduled transformation scripts with declarative SQL that auto-refreshes.
           </div>
 
           <div class="checkpoint">
@@ -463,7 +463,7 @@ so I can use it as a file source during this lab.
             <span class="badge badge-script">02_dynamic_tables.sql</span>
           </div>
 
-          <p>Dynamic tables flip ETL: you declare <strong>what the result should look like</strong>, and Snowflake handles <strong>when to refresh</strong>. No cron jobs, no orchestration, no manual MERGE scripts. This replaces what Snowforge does today.</p>
+          <p>Dynamic tables flip ETL: you declare <strong>what the result should look like</strong>, and Snowflake handles <strong>when to refresh</strong>. No cron jobs, no orchestration, no manual MERGE scripts. This replaces scheduled transformation jobs with declarative SQL.</p>
 
           <p>Here's the data model you'll build &mdash; five source tables flow into a curated dimensional model, which feeds three reporting dashboards:</p>
           <p><img alt="Data model: INBOUND → CORE_DATA → DATAMARTS" src="assets/img/data-model.svg" style="width:100%; max-width:960px; border-radius:8px;"></p>
@@ -483,7 +483,7 @@ IN SCHEMA BUH_HOL.CORE_DATA and show me the TARGET_LAG and REFRESH_MODE
 columns so we can see the settings.</pre>
           </div>
           <div class="callout callout-info">
-            <strong>What's happening:</strong> CoCo creates 5 dynamic tables that transform raw Clarity extracts into a clean dimensional model. Notice the different <code>REFRESH_MODE</code> settings &mdash; most tables use <code>INCREMENTAL</code> (process only changed rows), but <code>FACT_ENCOUNTER</code> uses <code>ADAPTIVE</code> (auto-reinitializes when Snowlift does a bulk reload, then resumes incremental).
+            <strong>What's happening:</strong> CoCo creates 5 dynamic tables that transform raw Clarity extracts into a clean dimensional model. Notice the different <code>REFRESH_MODE</code> settings &mdash; most tables use <code>INCREMENTAL</code> (process only changed rows), but <code>FACT_ENCOUNTER</code> uses <code>ADAPTIVE</code> (auto-reinitializes when extraction tools does a bulk reload, then resumes incremental).
           </div>
 
           <h3>2.2 Build the DATAMARTS layer via CoCo</h3>
@@ -519,11 +519,11 @@ table and show me a few sample rows from each.</pre>
             <strong>Key design decision:</strong> <code>TARGET_LAG</code> controls <em>freshness</em> (how stale can it be?). <code>REFRESH_MODE</code> controls <em>how</em> the data is refreshed (incremental change processing, full rebuild, or adaptive). In production, set both explicitly &mdash; don't rely on defaults.
           </div>
           <div class="callout callout-info">
-            <strong>REFRESH_MODE best practices:</strong> Use <strong>INCREMENTAL</strong> for simple projections, filters, and joins &mdash; it processes only changed rows and is the most cost-efficient. Use <strong>ADAPTIVE</strong> when upstream tables may receive bulk reloads (e.g., from Snowlift or INSERT OVERWRITE) &mdash; it auto-reinitializes then resumes incremental. Use <strong>FULL</strong> for heavy aggregations where a predictable full rebuild is simpler than tracking changes. Avoid non-deterministic functions like <code>CURRENT_DATE()</code> in dynamic table definitions &mdash; they prevent incremental refresh. Always set <code>REFRESH_MODE</code> explicitly; don't rely on <code>AUTO</code> in production.
+            <strong>REFRESH_MODE best practices:</strong> Use <strong>INCREMENTAL</strong> for simple projections, filters, and joins &mdash; it processes only changed rows and is the most cost-efficient. Use <strong>ADAPTIVE</strong> when upstream tables may receive bulk reloads (e.g., from extraction tools or INSERT OVERWRITE) &mdash; it auto-reinitializes then resumes incremental. Use <strong>FULL</strong> for heavy aggregations where a predictable full rebuild is simpler than tracking changes. Avoid non-deterministic functions like <code>CURRENT_DATE()</code> in dynamic table definitions &mdash; they prevent incremental refresh. Always set <code>REFRESH_MODE</code> explicitly; don't rely on <code>AUTO</code> in production.
           </div>
 
           <h3>2.4 Watch it refresh &ndash; the &ldquo;aha moment&rdquo;</h3>
-          <p>A new patient arrives in the ED with a stroke. Insert the data (simulating what Snowlift/Snowloader would do) and watch it cascade through all layers:</p>
+          <p>A new patient arrives in the ED with a stroke. Insert the data (simulating what your extraction tools would do) and watch it cascade through all layers:</p>
           <div class="code-block">
             <div class="code-header"><span>SQL &ndash; New ED patient</span><button class="copy-btn">📋 Copy</button></div>
             <pre>-- Insert new patient, encounter, diagnosis, and lab order
@@ -565,7 +565,7 @@ Then check the audit log — Jorge Medina's insert from the aha moment
 should appear there. If it hasn't arrived yet, wait a minute and check again.</pre>
           </div>
           <div class="callout callout-info">
-            <strong>What&rsquo;s happening:</strong> The stream on INBOUND.PATIENT captured the Jorge Medina insert from Step 2.6. The task's <code>WHEN SYSTEM$STREAM_HAS_DATA()</code> clause detected the change and logged it to the audit table &mdash; automatically, with no scheduling code. In production, streams + tasks handle audit trails, compliance logging, and triggering Snowlift reloads.
+            <strong>What&rsquo;s happening:</strong> The stream on INBOUND.PATIENT captured the Jorge Medina insert from Step 2.6. The task's <code>WHEN SYSTEM$STREAM_HAS_DATA()</code> clause detected the change and logged it to the audit table &mdash; automatically, with no scheduling code. In production, streams + tasks handle audit trails, compliance logging, and triggering extraction tools reloads.
           </div>
 
           <table>
@@ -892,7 +892,7 @@ pipeline is working end-to-end.</pre>
           <h3>Next steps for your environment</h3>
           <ol>
             <li><strong>Workspaces</strong> &ndash; Connect your GitLab/GitHub; store all SQL in version control</li>
-            <li><strong>Dynamic Tables</strong> &ndash; Replace Snowforge jobs; start with one pipeline, set TARGET_LAG by business need</li>
+            <li><strong>Dynamic Tables</strong> &ndash; Replace scheduled ETL jobs; start with one pipeline, set TARGET_LAG by business need</li>
             <li><strong>Iceberg + OneLake</strong> &ndash; Set up external volume; write DATAMARTS as Iceberg; connect PBI via Direct Lake</li>
             <li><strong>Tags</strong> &ndash; Define your PII taxonomy; run SYSTEM$CLASSIFY; attach masking to tags</li>
             <li><strong>Cost</strong> &ndash; Tag warehouses for chargeback; right-size Fabric capacity for BI reads only</li>

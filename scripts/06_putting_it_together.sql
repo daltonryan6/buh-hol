@@ -16,7 +16,7 @@ USE ROLE ACCOUNTADMIN;
 
 -- [Epic Clarity SQL Server]
 --        |
---        | Snowlift / Snowloader (simulated by 00_setup.sql)
+--        | your extraction tools (simulated by 00_setup.sql)
 --        v
 -- INBOUND schema (Clarity table names: PATIENT, PAT_ENC, CLARITY_SER, ORDER_PROC, HSP_ACCT_DX_LIST)
 --        |
@@ -66,7 +66,7 @@ ORDER BY NAME;
 -- 1. WORKSPACES: Connect your GitLab/GitHub; store all SQL in version control.
 --    Replace file-share SQL with Git-backed, reviewable, deployable code.
 --
--- 2. DYNAMIC TABLES: Replace Snowforge transformation jobs with declarative SQL.
+-- 2. DYNAMIC TABLES: Replace scheduled transformation jobs with declarative SQL.
 --    Start with one pipeline (e.g., a department dashboard) and set TARGET_LAG
 --    based on business need. Louis noted DTs use similar credits to ETL but
 --    save significant engineering time.
