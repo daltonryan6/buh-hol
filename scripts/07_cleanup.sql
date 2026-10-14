@@ -19,9 +19,6 @@ ALTER TASK IF EXISTS BUH_HOL.INBOUND.LOG_PATIENT_CHANGES SUSPEND;
 -- Drop the lab database (drops all schemas, tables, dynamic tables, tags, policies)
 DROP DATABASE IF EXISTS BUH_HOL;
 
--- Drop the dev clone if it still exists
-DROP DATABASE IF EXISTS BUH_HOL_DEV;
-
 -- Drop resource monitor
 DROP RESOURCE MONITOR IF EXISTS BUH_LAB_MONITOR;
 

@@ -23,24 +23,21 @@ USE ROLE ACCOUNTADMIN;
 -- that SHARES the same physical partitions. It's instant and free
 -- until you write to the clone (copy-on-write).
 
--- ---- Step 1: Clone the database (instant, regardless of size) ----
+-- ---- Step 1: Clone the INBOUND schema (instant, regardless of size) ----
 
-CREATE OR REPLACE DATABASE BUH_HOL_DEV CLONE BUH_HOL;
+CREATE OR REPLACE SCHEMA BUH_HOL.INBOUND_DEV CLONE BUH_HOL.INBOUND;
 
 -- Prove it's a real, independent copy
 SELECT 'PROD' AS ENV, COUNT(*) AS PATIENTS FROM BUH_HOL.INBOUND.PATIENT
 UNION ALL
-SELECT 'DEV',        COUNT(*)              FROM BUH_HOL_DEV.INBOUND.PATIENT;
-
--- The clone has its own dynamic tables, streams, and tasks
-SHOW DYNAMIC TABLES IN DATABASE BUH_HOL_DEV;
+SELECT 'DEV',        COUNT(*)              FROM BUH_HOL.INBOUND_DEV.PATIENT;
 
 
 -- ---- Step 2: Simulate an accident in the dev environment ----
 
 -- A developer meant to run: DELETE FROM PATIENT WHERE PAT_ID = 'P100099'
 -- But forgot the WHERE clause...
-DELETE FROM BUH_HOL_DEV.INBOUND.PATIENT;
+DELETE FROM BUH_HOL.INBOUND_DEV.PATIENT;
 
 -- Capture the query ID of the bad DELETE — we will use this for recovery
 SET bad_query_id = LAST_QUERY_ID();
@@ -49,7 +46,7 @@ SELECT $bad_query_id AS ACCIDENTAL_DELETE_QUERY_ID;
 -- Check the damage
 SELECT 'PROD' AS ENV, COUNT(*) AS PATIENTS FROM BUH_HOL.INBOUND.PATIENT
 UNION ALL
-SELECT 'DEV',        COUNT(*)              FROM BUH_HOL_DEV.INBOUND.PATIENT;
+SELECT 'DEV',        COUNT(*)              FROM BUH_HOL.INBOUND_DEV.PATIENT;
 -- DEV shows 0 patients. Production is untouched (clone isolation).
 
 
@@ -58,11 +55,11 @@ SELECT 'DEV',        COUNT(*)              FROM BUH_HOL_DEV.INBOUND.PATIENT;
 -- Time travel using the query ID: go back to the moment BEFORE that DELETE ran.
 -- This is more reliable than OFFSET (which depends on elapsed seconds).
 SELECT COUNT(*) AS PATIENTS_BEFORE_DELETE
-FROM BUH_HOL_DEV.INBOUND.PATIENT BEFORE(STATEMENT => $bad_query_id);
+FROM BUH_HOL.INBOUND_DEV.PATIENT BEFORE(STATEMENT => $bad_query_id);
 
 -- Preview the lost data
 SELECT PAT_ID, PAT_FIRST_NAME, PAT_LAST_NAME
-FROM BUH_HOL_DEV.INBOUND.PATIENT BEFORE(STATEMENT => $bad_query_id)
+FROM BUH_HOL.INBOUND_DEV.PATIENT BEFORE(STATEMENT => $bad_query_id)
 LIMIT 10;
 
 -- Alternative: time travel by offset (useful when you don't have the query ID)
@@ -72,19 +69,18 @@ LIMIT 10;
 -- ---- Step 4: Recover — restore the data from time travel ----
 
 -- Use the query ID to recover exactly to the moment before the bad statement
-INSERT INTO BUH_HOL_DEV.INBOUND.PATIENT
-SELECT * FROM BUH_HOL_DEV.INBOUND.PATIENT BEFORE(STATEMENT => $bad_query_id);
+INSERT INTO BUH_HOL.INBOUND_DEV.PATIENT
+SELECT * FROM BUH_HOL.INBOUND_DEV.PATIENT BEFORE(STATEMENT => $bad_query_id);
 
 -- Verify full recovery
 SELECT 'PROD' AS ENV, COUNT(*) AS PATIENTS FROM BUH_HOL.INBOUND.PATIENT
 UNION ALL
-SELECT 'DEV',        COUNT(*)              FROM BUH_HOL_DEV.INBOUND.PATIENT;
--- Both show 100 patients again.
+SELECT 'DEV',        COUNT(*)              FROM BUH_HOL.INBOUND_DEV.PATIENT;
+-- Both show 100+ patients again.
 
 
 -- ---- Step 5: Clean up ----
-DROP DATABASE BUH_HOL_DEV;
-USE DATABASE BUH_HOL;
+DROP SCHEMA BUH_HOL.INBOUND_DEV;
 
 
 -- ============================================================
