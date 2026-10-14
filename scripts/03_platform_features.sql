@@ -357,9 +357,9 @@ FROM BUH_HOL.DATAMARTS.ED_THROUGHPUT e
 WHERE e.PRIMARY_DIAGNOSIS IS NOT NULL
 LIMIT 10;
 
--- ---- Generate visit summaries using CORTEX.COMPLETE ----
+-- ---- Generate visit summaries using AI_COMPLETE ----
 
--- COMPLETE calls a hosted LLM to generate free-text output.
+-- AI_COMPLETE calls a hosted LLM to generate free-text output.
 -- Cortex AI functions consume credits based on token count.
 -- In a trial account, this is deducted from your free credits.
 SELECT
@@ -368,7 +368,7 @@ SELECT
     e.PRIMARY_DIAGNOSIS,
     e.ED_HOURS,
     e.TOTAL_CHARGES,
-    SNOWFLAKE.CORTEX.COMPLETE(
+    AI_COMPLETE(
         'llama3.1-70b',
         'You are a healthcare data analyst. Summarize this ED visit record in one sentence, '
         || 'noting the diagnosis, time spent, and relative cost level: '
