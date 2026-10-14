@@ -271,3 +271,30 @@ LIMIT 5;
 --   SNOWFLAKE.CORTEX.SUMMARIZE()       — condense long text
 --   SNOWFLAKE.CORTEX.EXTRACT_ANSWER()  — Q&A over text
 --   SNOWFLAKE.CORTEX.TRANSLATE()       — language translation
+
+-- ============================================================
+-- Beyond Cortex AI: Snowflake ML Functions
+-- ============================================================
+--
+-- Snowflake also provides ML functions that train, deploy, and serve
+-- models entirely inside Snowflake — no Python notebooks or external
+-- infrastructure required. These require Enterprise Edition or higher.
+--
+--   SNOWFLAKE.ML.FORECAST()           — time series forecasting
+--     Example: predict next month's ED visit volume by department
+--
+--   SNOWFLAKE.ML.ANOMALY_DETECTION()  — detect outliers in time series
+--     Example: flag unusual spikes in lab order volumes or charges
+--
+--   SNOWFLAKE.ML.CLASSIFICATION()     — train/predict classifiers
+--     Example: predict encounter type or readmission risk from patient data
+--
+--   SNOWFLAKE.ML.REGRESSION()         — train/predict continuous values
+--     Example: estimate expected length of stay from diagnosis and acuity
+--
+-- Usage pattern (same for all):
+--   1. CREATE SNOWFLAKE.ML.<TYPE> model_name(INPUT_DATA => ..., TARGET_COLNAME => ...)
+--   2. SELECT model_name!PREDICT(INPUT_DATA => OBJECT_CONSTRUCT(*)) FROM ...
+--
+-- The model trains on step 1 and is immediately available for predictions
+-- in step 2. No deployment pipeline, no model registry, no serving layer.

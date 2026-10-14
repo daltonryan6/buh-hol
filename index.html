@@ -663,8 +663,19 @@ Show me the top 20 results with their acuity classifications.</pre>
 Run both sections and show me the results.</pre>
           </div>
           <div class="callout callout-info">
-            <strong>What this unlocks:</strong> <code>CLASSIFY_TEXT</code> categorized diagnoses into urgency levels with zero training &mdash; just SQL. <code>COMPLETE</code> generated plain-English summaries from structured data. Other Cortex functions include <code>SENTIMENT</code>, <code>SUMMARIZE</code>, <code>EXTRACT_ANSWER</code>, and <code>TRANSLATE</code>. For full model training (forecast, anomaly detection, classification, regression), Snowflake ML functions are available on Enterprise Edition.
+            <strong>What this unlocks:</strong> <code>CLASSIFY_TEXT</code> categorized diagnoses into urgency levels with zero training &mdash; just SQL. <code>COMPLETE</code> generated plain-English summaries from structured data. Other Cortex functions include <code>SENTIMENT</code>, <code>SUMMARIZE</code>, <code>EXTRACT_ANSWER</code>, and <code>TRANSLATE</code>.
           </div>
+
+          <h3>Beyond Cortex AI: Snowflake ML Functions</h3>
+          <p>Snowflake also provides ML functions that <strong>train, deploy, and serve models</strong> entirely inside Snowflake &mdash; no Python notebooks or external infrastructure. These require Enterprise Edition.</p>
+          <table>
+            <tr><th>Function</th><th>What it does</th><th>Healthcare example</th></tr>
+            <tr><td><code>SNOWFLAKE.ML.FORECAST</code></td><td>Time series forecasting</td><td>Predict next month's ED visit volume</td></tr>
+            <tr><td><code>SNOWFLAKE.ML.ANOMALY_DETECTION</code></td><td>Detect outliers in time series</td><td>Flag unusual spikes in lab orders or charges</td></tr>
+            <tr><td><code>SNOWFLAKE.ML.CLASSIFICATION</code></td><td>Train/predict classifiers</td><td>Predict readmission risk from patient data</td></tr>
+            <tr><td><code>SNOWFLAKE.ML.REGRESSION</code></td><td>Train/predict continuous values</td><td>Estimate expected length of stay</td></tr>
+          </table>
+          <p>The pattern is the same for all: <code>CREATE</code> trains the model, then <code>!PREDICT</code> runs inference &mdash; all in SQL, no deployment pipeline needed.</p>
 
           <div class="checkpoint">
             <h4>Checkpoint</h4>
@@ -685,13 +696,16 @@ Run both sections and show me the results.</pre>
             <span class="badge badge-script">04_tags_and_governance.sql</span>
           </div>
 
+          <p>Tags are key-value labels you attach to Snowflake objects &mdash; databases, schemas, tables, columns, warehouses, even roles. They serve two purposes: <strong>classification</strong> (label what data is, so you can discover and audit sensitive data) and <strong>policy enforcement</strong> (attach masking or row access policies to a tag, and every object with that tag is automatically protected).</p>
+
           <p>Copy and paste this prompt into Cortex Code to create tags and masking policies:</p>
           <div class="code-block">
             <div class="code-header"><span>CoCo Prompt &ndash; Tags and masking</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
             <pre>Open the file scripts/04_tags_and_governance.sql from the buh-hol
 Git workspace and run Parts A through D. This creates governance tags,
 applies them to sensitive columns on the PATIENT table, creates
-masking policies, and attaches those policies to the tags.
+masking policies, attaches those policies to the tags, and creates
+a row access policy on FACT_ENCOUNTER.
 
 After execution, show me SHOW TAGS IN DATABASE BUH_HOL and
 SHOW MASKING POLICIES IN DATABASE BUH_HOL to confirm everything
@@ -762,7 +776,7 @@ USE SECONDARY ROLES ALL;</pre>
           </div>
 
           <div class="expected-output">
-            <strong>Expected masking results</strong>
+            <strong>Expected column masking results</strong>
             <table>
               <tr><th>Role</th><th>First Name</th><th>SSN</th><th>Email</th><th>DOB</th></tr>
               <tr><td>ADMIN</td><td>maria</td><td>111-22-3333</td><td>msantos@example.com</td><td>1965-03-14</td></tr>
@@ -771,9 +785,48 @@ USE SECONDARY ROLES ALL;</pre>
             </table>
           </div>
 
+          <h3>4.5 Row access policies &mdash; row-level security</h3>
+          <p>Column masking controls <strong>what you see</strong> in a column. Row access policies control <strong>which rows you see at all</strong>. In this example, clinicians only see encounters in the Emergency Department, while admins and analysts see all departments.</p>
+          <div class="code-block">
+            <div class="code-header"><span>SQL &ndash; Row access policy demo</span><button class="copy-btn">📋 Copy</button></div>
+            <pre>-- Column masking hides WHAT you see. Row access hides WHICH ROWS.
+USE SECONDARY ROLES NONE;
+
+-- ADMIN sees all 15 departments
+USE ROLE BUH_LAB_ADMIN;
+SELECT DEPARTMENT_NAME, COUNT(*) AS ENCOUNTER_COUNT
+FROM BUH_HOL.CORE_DATA.FACT_ENCOUNTER
+GROUP BY DEPARTMENT_NAME ORDER BY ENCOUNTER_COUNT DESC;
+
+-- CLINICIAN sees ONLY Emergency Department rows
+USE ROLE BUH_LAB_CLINICIAN;
+SELECT DEPARTMENT_NAME, COUNT(*) AS ENCOUNTER_COUNT
+FROM BUH_HOL.CORE_DATA.FACT_ENCOUNTER
+GROUP BY DEPARTMENT_NAME ORDER BY ENCOUNTER_COUNT DESC;
+
+-- Restore
+USE ROLE ACCOUNTADMIN;
+USE SECONDARY ROLES ALL;</pre>
+          </div>
+
+          <div class="expected-output">
+            <strong>Expected row access results</strong>
+            <table>
+              <tr><th>Role</th><th>Departments visible</th><th>Total rows</th></tr>
+              <tr><td>ADMIN</td><td>All 15</td><td>~7,500</td></tr>
+              <tr><td>CLINICIAN</td><td>Emergency Department only</td><td>~1,275</td></tr>
+            </table>
+          </div>
+
+          <table>
+            <tr><th>Policy type</th><th>Controls</th><th>Example</th></tr>
+            <tr><td>Column masking</td><td>What you see in a column</td><td>SSN shows as ***-**-3333 for clinicians</td></tr>
+            <tr><td>Row access</td><td>Which rows you see at all</td><td>Clinicians only see their department's encounters</td></tr>
+          </table>
+
           <div class="checkpoint">
             <h4>Checkpoint</h4>
-            <p>Tags applied to Clarity source columns. Tag-based masking protects all PII at once. ADMIN sees full data, CLINICIAN sees partial, ANALYST sees masked.</p>
+            <p>Tags applied to Clarity source columns. Column masking: ADMIN sees full data, CLINICIAN sees partial SSN, ANALYST sees all masked. Row access: CLINICIAN sees only Emergency Department encounters, ADMIN and ANALYST see all departments.</p>
           </div>
 
           <div class="step-nav">

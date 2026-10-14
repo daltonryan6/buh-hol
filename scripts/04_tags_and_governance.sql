@@ -14,10 +14,24 @@ USE WAREHOUSE BUH_ANALYTICS_WH;
 USE ROLE ACCOUNTADMIN;
 
 -- ============================================================
--- PART A: Where can tags be applied?
+-- PART A: What are tags?
 -- ============================================================
 
--- Tags are key-value metadata on Snowflake objects:
+-- Tags are key-value labels you attach to Snowflake objects —
+-- databases, schemas, tables, columns, warehouses, even roles.
+-- They serve two purposes:
+--
+--   1. CLASSIFICATION: Label what data is (PII, PHI, sensitivity level)
+--      so you can discover and audit sensitive data across your account.
+--
+--   2. POLICY ENFORCEMENT: Attach masking policies or row access policies
+--      to a tag instead of individual columns/tables. Every object with
+--      that tag is automatically protected — add a tag, get protection.
+--
+-- Tags are defined with optional ALLOWED_VALUES to enforce consistency.
+-- Example: PII_TYPE can only be 'SSN', 'NAME', 'EMAIL', etc.
+
+-- Where can tags be applied?
 --   Warehouses  -> cost_center = 'Research'
 --   Databases   -> data_domain = 'Clinical'
 --   Schemas     -> data_layer  = 'INBOUND'
@@ -160,13 +174,51 @@ USE ROLE ACCOUNTADMIN;
 USE SECONDARY ROLES ALL;
 
 -- ============================================================
--- PART F: Tags vs Purview labels (quick reference)
+-- PART F: Row Access Policies — row-level security
 -- ============================================================
 
--- Snowflake Tags:     Applied in Snowflake. Drive masking & access.
--- Purview Labels:     Applied in Microsoft. Drive DLP & encryption.
--- Auto-sync?          NO. Separate systems. Align manually.
--- Purview scans SF?   YES. Tables, views, lineage all discoverable.
+-- Column masking hides WHAT you see in a column.
+-- Row access policies control WHICH ROWS you see at all.
+--
+-- Example: clinicians should only see encounters in their department,
+-- analysts should see all departments for reporting.
+
+CREATE OR REPLACE ROW ACCESS POLICY BUH_HOL.GOVERNANCE.DEPARTMENT_ACCESS
+  AS (department_name VARCHAR) RETURNS BOOLEAN ->
+  CASE
+    -- Admins and analysts see all rows (analysts need full data for reporting)
+    WHEN IS_ROLE_IN_SESSION('BUH_LAB_ADMIN') THEN TRUE
+    WHEN IS_ROLE_IN_SESSION('BUH_LAB_ANALYST') THEN TRUE
+    -- Clinicians only see Emergency Department rows (simulating department-level access)
+    WHEN IS_ROLE_IN_SESSION('BUH_LAB_CLINICIAN') THEN department_name = 'Emergency Department'
+    ELSE FALSE
+  END;
+
+-- Apply to the FACT_ENCOUNTER dynamic table
+ALTER TABLE BUH_HOL.CORE_DATA.FACT_ENCOUNTER
+  ADD ROW ACCESS POLICY BUH_HOL.GOVERNANCE.DEPARTMENT_ACCESS
+  ON (DEPARTMENT_NAME);
+
+-- Test: grant SELECT on FACT_ENCOUNTER to all lab roles
+GRANT SELECT ON TABLE BUH_HOL.CORE_DATA.FACT_ENCOUNTER TO ROLE BUH_LAB_ADMIN;
+GRANT SELECT ON TABLE BUH_HOL.CORE_DATA.FACT_ENCOUNTER TO ROLE BUH_LAB_CLINICIAN;
+GRANT SELECT ON TABLE BUH_HOL.CORE_DATA.FACT_ENCOUNTER TO ROLE BUH_LAB_ANALYST;
+
+USE SECONDARY ROLES NONE;
+
+-- ADMIN sees all departments
+USE ROLE BUH_LAB_ADMIN;
+SELECT DEPARTMENT_NAME, COUNT(*) AS ENCOUNTER_COUNT
+FROM BUH_HOL.CORE_DATA.FACT_ENCOUNTER GROUP BY DEPARTMENT_NAME ORDER BY ENCOUNTER_COUNT DESC;
+
+-- CLINICIAN sees only Emergency Department rows
+USE ROLE BUH_LAB_CLINICIAN;
+SELECT DEPARTMENT_NAME, COUNT(*) AS ENCOUNTER_COUNT
+FROM BUH_HOL.CORE_DATA.FACT_ENCOUNTER GROUP BY DEPARTMENT_NAME ORDER BY ENCOUNTER_COUNT DESC;
+
+-- Restore
+USE ROLE ACCOUNTADMIN;
+USE SECONDARY ROLES ALL;
 
 -- ============================================================
 -- CHECKPOINT
@@ -174,9 +226,8 @@ USE SECONDARY ROLES ALL;
 
 -- You should see:
 --   - Tags applied to INBOUND.PATIENT columns
---   - Tag-based masking protecting all PII columns at once
---   - ADMIN sees full data, CLINICIAN sees partial, ANALYST sees masked
---   - Understand that Snowflake tags and Purview labels are separate
+--   - Column masking: ADMIN full, CLINICIAN partial SSN, ANALYST all masked
+--   - Row access: CLINICIAN sees only ED rows, ADMIN/ANALYST see all
 
 SHOW TAGS IN DATABASE BUH_HOL;
 SHOW MASKING POLICIES IN DATABASE BUH_HOL;
