@@ -216,13 +216,47 @@ LIMIT 20;
 
 
 -- ============================================================
--- PART E: ML Functions
+-- PART E: ML & AI Functions
 -- ============================================================
 
--- Snowflake Cortex ML functions run models directly in SQL.
--- No infrastructure, no Python notebooks, no model deployment.
+-- Snowflake has two families of built-in intelligence:
+--   1. SNOWFLAKE.ML.*      — train/predict models (forecast, anomaly, classify)
+--   2. SNOWFLAKE.CORTEX.*  — LLM-powered functions (complete, classify, sentiment)
+-- Both run inside Snowflake. No infrastructure, no data movement.
 
--- Use Cortex COMPLETE to generate AI visit summaries from ED data
+-- ---- ML: Classify encounters using SNOWFLAKE.ML.CLASSIFICATION ----
+
+-- Step 1: Build a classification model that predicts encounter type
+--         from charges and length of stay (trains on FACT_ENCOUNTER)
+CREATE OR REPLACE SNOWFLAKE.ML.CLASSIFICATION BUH_HOL.CORE_DATA.ENCOUNTER_CLASSIFIER(
+    INPUT_DATA => SYSTEM$REFERENCE('TABLE', 'BUH_HOL.CORE_DATA.FACT_ENCOUNTER'),
+    TARGET_COLNAME => 'ENCOUNTER_TYPE'
+);
+
+-- Step 2: Predict encounter type for recent high-charge visits
+SELECT
+    ENCOUNTER_ID,
+    DEPARTMENT_NAME,
+    TOTAL_CHARGES,
+    LOS_DAYS_OR_HOURS,
+    ENCOUNTER_TYPE AS ACTUAL_TYPE,
+    BUH_HOL.CORE_DATA.ENCOUNTER_CLASSIFIER!PREDICT(
+        INPUT_DATA => OBJECT_CONSTRUCT(
+            'TOTAL_CHARGES', TOTAL_CHARGES,
+            'LOS_DAYS_OR_HOURS', LOS_DAYS_OR_HOURS,
+            'DEPARTMENT_NAME', DEPARTMENT_NAME,
+            'IS_CLOSED', IS_CLOSED
+        )
+    ):class::VARCHAR AS PREDICTED_TYPE
+FROM BUH_HOL.CORE_DATA.FACT_ENCOUNTER
+WHERE TOTAL_CHARGES > 50000
+ORDER BY TOTAL_CHARGES DESC
+LIMIT 10;
+
+-- ---- AI: Generate visit summaries using SNOWFLAKE.CORTEX.COMPLETE ----
+
+-- Cortex LLM functions call hosted models directly in SQL.
+-- No API keys, no endpoints, no Python — just SQL.
 SELECT
     e.ENCOUNTER_ID,
     e.PATIENT_NAME,
@@ -241,9 +275,7 @@ FROM BUH_HOL.DATAMARTS.ED_THROUGHPUT e
 WHERE e.PRIMARY_DIAGNOSIS IS NOT NULL
 LIMIT 5;
 
--- Snowflake ML also supports:
---   SNOWFLAKE.ML.FORECAST() — time series forecasting
---   SNOWFLAKE.ML.ANOMALY_DETECTION() — detect outliers
---   SNOWFLAKE.ML.CLASSIFICATION() — train/predict classifiers
---   SNOWFLAKE.ML.REGRESSION() — train/predict regression models
--- These build, train, and serve models entirely within Snowflake.
+-- Other built-in functions:
+--   ML:  SNOWFLAKE.ML.FORECAST(), ANOMALY_DETECTION(), REGRESSION()
+--   AI:  SNOWFLAKE.CORTEX.SENTIMENT(), CLASSIFY_TEXT(), SUMMARIZE(),
+--        EXTRACT_ANSWER(), TRANSLATE()

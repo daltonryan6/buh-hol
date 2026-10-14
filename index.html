@@ -648,23 +648,27 @@ Show me the top 20 results with their acuity classifications.</pre>
           </div>
 
           <h3>3.5 ML &amp; AI Functions</h3>
-          <p>Snowflake Cortex runs AI models directly in SQL &mdash; no external APIs, no infrastructure, no data movement.</p>
+          <p>Snowflake has two families of built-in intelligence: <strong>ML functions</strong> that train and predict models entirely in SQL, and <strong>Cortex AI functions</strong> that call hosted LLMs directly. Both run inside Snowflake &mdash; no APIs, no infrastructure, no data movement.</p>
           <div class="code-block">
-            <div class="code-header"><span>CoCo Prompt &ndash; ML / AI functions</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
-            <pre>Run Part E of scripts/03_platform_features.sql. It uses
-SNOWFLAKE.CORTEX.COMPLETE to generate AI visit summaries
-for ED visits based on diagnosis, time in ED, and charges.
+            <div class="code-header"><span>CoCo Prompt &ndash; ML &amp; AI functions</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
+            <pre>Run Part E of scripts/03_platform_features.sql. It does two things:
 
-Show me the results. Also mention what other ML functions are available
-(FORECAST, ANOMALY_DETECTION, CLASSIFICATION, REGRESSION).</pre>
+1. Trains an ML CLASSIFICATION model on FACT_ENCOUNTER to predict
+   encounter type from charges and length of stay, then runs predictions
+   on high-charge visits so we can compare actual vs predicted.
+
+2. Uses SNOWFLAKE.CORTEX.COMPLETE (an LLM) to generate plain-English
+   visit summaries for ED encounters.
+
+Run both sections and show me the results.</pre>
           </div>
           <div class="callout callout-info">
-            <strong>What this unlocks:</strong> Cortex AI functions (<code>COMPLETE</code>, <code>SUMMARIZE</code>, <code>EXTRACT_ANSWER</code>, <code>SENTIMENT</code>, <code>TRANSLATE</code>) plus Snowflake ML (<code>FORECAST</code>, <code>CLASSIFICATION</code>, <code>REGRESSION</code>) all run inside Snowflake. Combined with the DATAMARTS tables you built, this is the foundation for clinical AI: auto-summarizing notes, predicting readmissions, or forecasting ED volume.
+            <strong>What this unlocks:</strong> <code>SNOWFLAKE.ML.CLASSIFICATION</code> trained a model and generated predictions &mdash; all in SQL, no Python needed. <code>SNOWFLAKE.CORTEX.COMPLETE</code> called an LLM to summarize records in plain English. Other built-in functions include <code>FORECAST</code> (time series), <code>ANOMALY_DETECTION</code>, <code>SENTIMENT</code>, <code>SUMMARIZE</code>, and <code>TRANSLATE</code>.
           </div>
 
           <div class="checkpoint">
             <h4>Checkpoint</h4>
-            <p>Zero-copy clone created and recovered. Resource monitor attached to warehouse. Query cache confirmed (second run = 0 bytes scanned). Python UDF classifying encounter acuity. AI-generated visit summaries for ED visits.</p>
+            <p>Zero-copy clone created and recovered. Resource monitor attached to warehouse. Query cache confirmed (second run = 0 bytes scanned). Python UDF classifying encounter acuity. ML classification model trained and predicting encounter types. AI-generated visit summaries for ED visits.</p>
           </div>
 
           <div class="step-nav">
