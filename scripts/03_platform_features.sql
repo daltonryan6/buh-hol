@@ -223,14 +223,16 @@ FROM BUH_HOL.INBOUND.CLINICAL_DOCUMENTS d,
 
 -- Extract the full text from the discharge summary
 SELECT SNOWFLAKE.CORTEX.PARSE_DOCUMENT(
-    @BUH_HOL.INBOUND.LAB_REPO/branches/main/docs/discharge_summary_sample.pdf,
+    '@BUH_HOL.INBOUND.LAB_REPO/branches/main',
+    'docs/discharge_summary_sample.pdf',
     {'mode': 'LAYOUT'}
 ):content::VARCHAR AS EXTRACTED_TEXT;
 
 -- Ask questions against the extracted document
 SELECT SNOWFLAKE.CORTEX.EXTRACT_ANSWER(
     (SELECT SNOWFLAKE.CORTEX.PARSE_DOCUMENT(
-        @BUH_HOL.INBOUND.LAB_REPO/branches/main/docs/discharge_summary_sample.pdf,
+        '@BUH_HOL.INBOUND.LAB_REPO/branches/main',
+        'docs/discharge_summary_sample.pdf',
         {'mode': 'LAYOUT'}
     ):content::VARCHAR),
     'What medications was the patient discharged on?'
@@ -238,7 +240,8 @@ SELECT SNOWFLAKE.CORTEX.EXTRACT_ANSWER(
 
 SELECT SNOWFLAKE.CORTEX.EXTRACT_ANSWER(
     (SELECT SNOWFLAKE.CORTEX.PARSE_DOCUMENT(
-        @BUH_HOL.INBOUND.LAB_REPO/branches/main/docs/discharge_summary_sample.pdf,
+        '@BUH_HOL.INBOUND.LAB_REPO/branches/main',
+        'docs/discharge_summary_sample.pdf',
         {'mode': 'LAYOUT'}
     ):content::VARCHAR),
     'What is the follow-up plan?'
