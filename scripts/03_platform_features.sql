@@ -69,6 +69,9 @@ LIMIT 10;
 -- ---- Step 4: Recover — restore the data from time travel ----
 
 -- Use the query ID to recover exactly to the moment before the bad statement
+-- Run this INSERT only once. If you run it again, you'll get duplicates.
+-- Alternative: CREATE OR REPLACE TABLE ... CLONE ... BEFORE(STATEMENT => ...)
+-- for a clean, idempotent recovery.
 INSERT INTO BUH_HOL.INBOUND.PATIENT_DEV
 SELECT * FROM BUH_HOL.INBOUND.PATIENT_DEV BEFORE(STATEMENT => $bad_query_id);
 
@@ -91,6 +94,10 @@ DROP TABLE BUH_HOL.INBOUND.PATIENT_DEV;
 -- suspend a warehouse when it hits a threshold. This prevents
 -- runaway queries from consuming more credits than expected.
 
+-- LAB NOTE: 10 credits is intentionally low to demonstrate the feature.
+-- If this monitor suspends your warehouse during the lab, run:
+--   ALTER WAREHOUSE BUH_ANALYTICS_WH RESUME;
+-- In production, set quotas based on actual expected usage.
 CREATE OR REPLACE RESOURCE MONITOR BUH_LAB_MONITOR
     WITH CREDIT_QUOTA = 10
     FREQUENCY = MONTHLY
@@ -120,12 +127,12 @@ SHOW RESOURCE MONITORS;
 -- PART C: Query Caching
 -- ============================================================
 
--- Snowflake has three cache layers:
---   1. RESULT CACHE: exact same query → instant (24h, free, no warehouse)
---   2. LOCAL DISK CACHE: warehouse SSD caches partitions (active while running)
---   3. REMOTE DISK CACHE: shared storage layer cache
+-- Snowflake has multiple cache layers:
+--   1. RESULT CACHE: exact same query → instant (24h, free, no warehouse needed)
+--   2. LOCAL DISK CACHE (DATA CACHE): warehouse SSD caches micro-partitions
+--      (active while warehouse is running; lost on suspend)
 --
--- Result cache is especially important for Power BI:
+-- Result cache is especially important for Power BI / Tableau:
 -- when 50 users open the same dashboard, only the first query runs.
 
 -- Run a query
@@ -228,26 +235,24 @@ COPY FILES
   FROM @BUH_HOL.INBOUND.LAB_REPO/branches/main/docs/discharge_summary_sample.pdf;
 
 -- Extract the full text from the discharge summary
-SELECT SNOWFLAKE.CORTEX.PARSE_DOCUMENT(
-    '@BUH_HOL.INBOUND.DOC_STAGE',
-    'discharge_summary_sample.pdf',
+-- Using AI_PARSE_DOCUMENT (SNOWFLAKE.CORTEX.PARSE_DOCUMENT is deprecated end of 2026)
+SELECT AI_PARSE_DOCUMENT(
+    TO_FILE('@BUH_HOL.INBOUND.DOC_STAGE', 'discharge_summary_sample.pdf'),
     {'mode': 'LAYOUT'}
 ):content::VARCHAR AS EXTRACTED_TEXT;
 
 -- Ask questions against the extracted document
 SELECT SNOWFLAKE.CORTEX.EXTRACT_ANSWER(
-    (SELECT SNOWFLAKE.CORTEX.PARSE_DOCUMENT(
-        '@BUH_HOL.INBOUND.DOC_STAGE',
-        'discharge_summary_sample.pdf',
+    (SELECT AI_PARSE_DOCUMENT(
+        TO_FILE('@BUH_HOL.INBOUND.DOC_STAGE', 'discharge_summary_sample.pdf'),
         {'mode': 'LAYOUT'}
     ):content::VARCHAR),
     'What medications was the patient discharged on?'
 )[0]:answer::VARCHAR AS DISCHARGE_MEDICATIONS;
 
 SELECT SNOWFLAKE.CORTEX.EXTRACT_ANSWER(
-    (SELECT SNOWFLAKE.CORTEX.PARSE_DOCUMENT(
-        '@BUH_HOL.INBOUND.DOC_STAGE',
-        'discharge_summary_sample.pdf',
+    (SELECT AI_PARSE_DOCUMENT(
+        TO_FILE('@BUH_HOL.INBOUND.DOC_STAGE', 'discharge_summary_sample.pdf'),
         {'mode': 'LAYOUT'}
     ):content::VARCHAR),
     'What is the follow-up plan?'
@@ -261,7 +266,8 @@ SELECT SNOWFLAKE.CORTEX.EXTRACT_ANSWER(
 -- You can write Python, Java, JavaScript, or Scala functions
 -- that run inside Snowflake's secure sandbox. No data leaves.
 
--- Clinical example: compute a simple acuity score from encounter data
+-- Python 3.11 is the latest supported runtime as of 2025.
+-- If you get a version error, try RUNTIME_VERSION = '3.9'
 CREATE OR REPLACE FUNCTION BUH_HOL.CORE_DATA.CLINICAL_ACUITY_SCORE(
     encounter_type VARCHAR,
     los_hours FLOAT,
@@ -335,7 +341,7 @@ LIMIT 20;
 
 -- ---- Classify diagnoses by clinical urgency ----
 
--- CLASSIFY_TEXT uses an LLM to categorize free-text into labels you define.
+-- AI_CLASSIFY uses an LLM to categorize free-text into labels you define.
 -- No training step needed — just pass the text and the categories.
 SELECT
     e.ENCOUNTER_ID,
@@ -343,10 +349,10 @@ SELECT
     e.PRIMARY_DIAGNOSIS,
     e.ED_HOURS,
     e.TOTAL_CHARGES,
-    SNOWFLAKE.CORTEX.CLASSIFY_TEXT(
+    AI_CLASSIFY(
         e.PRIMARY_DIAGNOSIS,
         ['Life-threatening', 'Urgent', 'Non-urgent']
-    ):label::VARCHAR AS URGENCY_LEVEL
+    ):labels[0]::VARCHAR AS URGENCY_LEVEL
 FROM BUH_HOL.DATAMARTS.ED_THROUGHPUT e
 WHERE e.PRIMARY_DIAGNOSIS IS NOT NULL
 LIMIT 10;
@@ -354,6 +360,8 @@ LIMIT 10;
 -- ---- Generate visit summaries using CORTEX.COMPLETE ----
 
 -- COMPLETE calls a hosted LLM to generate free-text output.
+-- Cortex AI functions consume credits based on token count.
+-- In a trial account, this is deducted from your free credits.
 SELECT
     e.ENCOUNTER_ID,
     e.PATIENT_NAME,
@@ -372,11 +380,15 @@ FROM BUH_HOL.DATAMARTS.ED_THROUGHPUT e
 WHERE e.PRIMARY_DIAGNOSIS IS NOT NULL
 LIMIT 5;
 
--- Other Cortex AI functions available in SQL:
---   SNOWFLAKE.CORTEX.SENTIMENT()       — positive/negative/neutral
---   SNOWFLAKE.CORTEX.SUMMARIZE()       — condense long text
---   SNOWFLAKE.CORTEX.EXTRACT_ANSWER()  — Q&A over text
---   SNOWFLAKE.CORTEX.TRANSLATE()       — language translation
+-- Cortex AI functions available in SQL (use AI_* canonical names):
+--   AI_CLASSIFY()       — classify text into your categories
+--   AI_COMPLETE()       — general LLM generation (replaces CORTEX.COMPLETE)
+--   AI_EXTRACT()        — extract structured data from text
+--   AI_FILTER()         — boolean LLM filter
+--   AI_PARSE_DOCUMENT() — extract text/layout from documents
+--
+-- Legacy functions still available (being deprecated end of 2026):
+--   SNOWFLAKE.CORTEX.SENTIMENT(), SUMMARIZE(), EXTRACT_ANSWER(), TRANSLATE()
 
 -- ============================================================
 -- Beyond Cortex AI: Snowflake ML Functions

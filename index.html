@@ -654,7 +654,7 @@ Show me the query history comparison.</pre>
 Run all sections and show me the results.</pre>
           </div>
           <div class="callout callout-info">
-            <strong>What this shows:</strong> VARIANT columns store JSON natively &mdash; query nested fields with <code>:</code> dot notation, explode arrays with <code>LATERAL FLATTEN</code>. For unstructured documents, <code>PARSE_DOCUMENT</code> extracts text from PDFs and images on any stage, and <code>EXTRACT_ANSWER</code> lets you ask natural-language questions against that text. No external services, no data movement.
+            <strong>What this shows:</strong> VARIANT columns store JSON natively &mdash; query nested fields with <code>:</code> dot notation, explode arrays with <code>LATERAL FLATTEN</code>. For unstructured documents, <code>AI_PARSE_DOCUMENT</code> extracts text from PDFs and images on any stage, and <code>EXTRACT_ANSWER</code> lets you ask natural-language questions against that text. No external services, no data movement.
           </div>
 
           <h3>3.5 Custom Python UDFs</h3>
@@ -675,7 +675,7 @@ Show me the top 20 results with their acuity classifications.</pre>
             <div class="code-header"><span>CoCo Prompt &ndash; Cortex AI functions</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
             <pre>Run Part F of scripts/03_platform_features.sql. It does two things:
 
-1. Uses SNOWFLAKE.CORTEX.CLASSIFY_TEXT to categorize ED diagnoses
+1. Uses AI_CLASSIFY to categorize ED diagnoses
    by clinical urgency (life-threatening, urgent, non-urgent) —
    no training step needed, just pass the text and the labels.
 
@@ -685,7 +685,7 @@ Show me the top 20 results with their acuity classifications.</pre>
 Run both sections and show me the results.</pre>
           </div>
           <div class="callout callout-info">
-            <strong>What this unlocks:</strong> <code>CLASSIFY_TEXT</code> categorized diagnoses into urgency levels with zero training &mdash; just SQL. <code>COMPLETE</code> generated plain-English summaries from structured data. Other Cortex functions include <code>SENTIMENT</code>, <code>SUMMARIZE</code>, <code>EXTRACT_ANSWER</code>, and <code>TRANSLATE</code>.
+            <strong>What this unlocks:</strong> <code>AI_CLASSIFY</code> categorized diagnoses into urgency levels with zero training &mdash; just SQL. <code>COMPLETE</code> generated plain-English summaries from structured data. Other Cortex functions include <code>AI_EXTRACT</code>, <code>AI_FILTER</code>, <code>AI_COMPLETE</code>, and <code>AI_PARSE_DOCUMENT</code>.
           </div>
 
           <h3>Beyond Cortex AI: Snowflake ML Functions</h3>
@@ -701,7 +701,7 @@ Run both sections and show me the results.</pre>
 
           <div class="checkpoint">
             <h4>Checkpoint</h4>
-            <p>Zero-copy clone created and recovered. Resource monitor attached to warehouse. Query cache confirmed (second run = 0 bytes scanned). Python UDF classifying encounter acuity. Cortex AI classifying diagnoses by urgency and generating visit summaries.</p>
+            <p>Zero-copy clone created and recovered. Resource monitor attached to warehouse. Query cache confirmed (second run = 0 bytes scanned). Semi-structured JSON queried with dot notation and LATERAL FLATTEN. PDF parsed and questions answered with AI. Python UDF classifying encounter acuity. Cortex AI classifying diagnoses by urgency and generating visit summaries.</p>
           </div>
 
           <div class="step-nav">
