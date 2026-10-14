@@ -7,7 +7,7 @@
 =============================================================================*/
 
 USE DATABASE BUH_HOL;
-USE WAREHOUSE COMPUTE_WH;
+USE WAREHOUSE BUH_ANALYTICS_WH;
 USE ROLE ACCOUNTADMIN;
 
 -- ============================================================

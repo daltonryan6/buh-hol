@@ -746,7 +746,7 @@ Include these interactive features:
 Also add a second section using ED_THROUGHPUT:
 5. A scatter plot of ED hours vs total charges, colored by provider
 
-Use the warehouse COMPUTE_WH. Add a title "Brown University Health —
+Use the warehouse BUH_ANALYTICS_WH. Add a title "Brown University Health —
 Clinical Operations" and use st.columns for the metric cards. Make it
 visually clean with st.divider() between sections.</pre>
           </div>
@@ -949,7 +949,7 @@ Confirm everything was cleaned up successfully.</pre>
           <div class="code-block">
             <div class="code-header"><span>SQL &ndash; 06_cleanup.sql</span><button class="copy-btn">📋 Copy</button></div>
             <pre>USE ROLE ACCOUNTADMIN;
-ALTER WAREHOUSE COMPUTE_WH UNSET TAG BUH_HOL.GOVERNANCE.COST_CENTER;
+ALTER WAREHOUSE BUH_ANALYTICS_WH UNSET TAG BUH_HOL.GOVERNANCE.COST_CENTER;
 DROP DATABASE IF EXISTS BUH_HOL;
 DROP ROLE IF EXISTS BUH_LAB_ADMIN;
 DROP ROLE IF EXISTS BUH_LAB_ANALYST;

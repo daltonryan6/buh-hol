@@ -11,7 +11,7 @@
 =============================================================================*/
 
 USE DATABASE BUH_HOL;
-USE WAREHOUSE COMPUTE_WH;
+USE WAREHOUSE BUH_ANALYTICS_WH;
 USE ROLE ACCOUNTADMIN;
 
 -- ============================================================
@@ -105,7 +105,7 @@ CREATE OR REPLACE RESOURCE MONITOR BUH_LAB_MONITOR
         ON 100 PERCENT DO SUSPEND;
 
 -- Attach to our warehouse
-ALTER WAREHOUSE COMPUTE_WH SET RESOURCE_MONITOR = BUH_LAB_MONITOR;
+ALTER WAREHOUSE BUH_ANALYTICS_WH SET RESOURCE_MONITOR = BUH_LAB_MONITOR;
 
 -- View the monitor
 SHOW RESOURCE MONITORS;
