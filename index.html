@@ -463,6 +463,9 @@ SHOW INTEGRATIONS LIKE 'github_buh_lab'.</pre>
           <p><img alt="Data model: INBOUND → CORE_DATA → DATAMARTS" src="assets/img/data-model.svg" style="width:100%; max-width:960px; border-radius:8px;"></p>
 
           <h3>2.1 Build the CORE_DATA layer via CoCo</h3>
+          <div class="callout callout-warn">
+            <strong>Before you continue:</strong> Start a new CoCo chat (click the <strong>+</strong> icon at the top of the CoCo panel) or refresh your browser. The setup script in Step 1 recreated the database, and CoCo needs a fresh session to pick up the new Git workspace context.
+          </div>
           <p>Copy and paste this prompt into Cortex Code:</p>
           <div class="code-block">
             <div class="code-header"><span>CoCo Prompt &ndash; Build CORE_DATA layer</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
