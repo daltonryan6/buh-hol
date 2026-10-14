@@ -1,6 +1,6 @@
 /*=============================================================================
   Brown University Health - Hands-On Lab
-  Script 04: Power BI, Iceberg Tables & Microsoft Fabric
+  Script 05: Power BI, Iceberg Tables & Microsoft Fabric
 
   GOAL: Understand the three Power BI connection options, create an
         Iceberg table, and discuss Fabric CU cost management.

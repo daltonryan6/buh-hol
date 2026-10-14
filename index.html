@@ -680,13 +680,13 @@ Show me the results. Also mention what other ML functions are available
           <h2>Tags, Sensitivity &amp; Governance</h2>
           <div class="step-meta">
             <span class="badge badge-time">1:15 &ndash; 1:30</span>
-            <span class="badge badge-script">05_tags_and_governance.sql</span>
+            <span class="badge badge-script">04_tags_and_governance.sql</span>
           </div>
 
           <p>Copy and paste this prompt into Cortex Code to run the full governance script:</p>
           <div class="code-block">
             <div class="code-header"><span>CoCo Prompt &ndash; Tags and masking</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
-            <pre>Open the file scripts/05_tags_and_governance.sql from the buh-hol
+            <pre>Open the file scripts/04_tags_and_governance.sql from the buh-hol
 Git workspace and run the full script. It creates governance tags,
 applies them to sensitive columns on the PATIENT table, creates
 masking policies, and attaches those policies to the tags.
@@ -783,7 +783,7 @@ FROM BUH_HOL.INBOUND.PATIENT LIMIT 3;</pre>
           <h2>Power BI, Iceberg &amp; Visualization</h2>
           <div class="step-meta">
             <span class="badge badge-time">1:30 &ndash; 1:45</span>
-            <span class="badge badge-script">04_powerbi_iceberg_fabric.sql</span>
+            <span class="badge badge-script">05_powerbi_iceberg_fabric.sql</span>
           </div>
 
           <p><img alt="Power BI and Snowflake integration overview" src="assets/img/powerbi-overview.png" style="width:100%; max-width:800px; border-radius:8px;"></p>
@@ -805,7 +805,7 @@ FROM BUH_HOL.INBOUND.PATIENT LIMIT 3;</pre>
           <p>Iceberg tables use the same SQL but store data in open Parquet format. Any Iceberg-compatible engine (Fabric, Spark, Trino) can read it. Copy and paste this prompt into Cortex Code:</p>
           <div class="code-block">
             <div class="code-header"><span>CoCo Prompt &ndash; Create Iceberg table</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
-            <pre>Open the file scripts/04_powerbi_iceberg_fabric.sql from the buh-hol
+            <pre>Open the file scripts/05_powerbi_iceberg_fabric.sql from the buh-hol
 Git workspace and run Part B. It creates an Iceberg table from our
 DATAMARTS.DEPARTMENT_DASHBOARD dynamic table.
 
