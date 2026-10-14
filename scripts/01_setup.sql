@@ -30,6 +30,11 @@
         - Workday Procurement (via connectors)
 
   SAFE TO RERUN: Yes - uses CREATE OR REPLACE throughout
+
+  IDEMPOTENCY STRATEGY:
+    Warehouses & roles:  IF NOT EXISTS (preserve if they already exist)
+    Database:            OR REPLACE    (full reset each run)
+    Schemas & tables:    Created fresh after database reset
 =============================================================================*/
 
 -- ============================================================
@@ -43,12 +48,14 @@ CREATE WAREHOUSE IF NOT EXISTS BUH_PIPELINE_WH
   WAREHOUSE_SIZE = 'XSMALL'
   AUTO_SUSPEND = 60
   AUTO_RESUME = TRUE
+  INITIALLY_SUSPENDED = TRUE
   COMMENT = 'Dynamic table and stream/task pipeline refreshes';
 
 CREATE WAREHOUSE IF NOT EXISTS BUH_ANALYTICS_WH
   WAREHOUSE_SIZE = 'XSMALL'
   AUTO_SUSPEND = 60
   AUTO_RESUME = TRUE
+  INITIALLY_SUSPENDED = TRUE
   COMMENT = 'Interactive queries, Streamlit, and BI tools';
 
 USE WAREHOUSE BUH_ANALYTICS_WH;
@@ -58,10 +65,14 @@ USE WAREHOUSE BUH_ANALYTICS_WH;
 -- ============================================================
 CREATE OR REPLACE DATABASE BUH_HOL;
 
-CREATE SCHEMA BUH_HOL.INBOUND;     -- Raw source extracts land here
-CREATE SCHEMA BUH_HOL.CORE_DATA;     -- Cleaned dimensional model
-CREATE SCHEMA BUH_HOL.DATAMARTS;        -- Aggregated reporting tables
-CREATE SCHEMA BUH_HOL.GOVERNANCE;  -- Tags, masking policies
+CREATE SCHEMA BUH_HOL.INBOUND
+  COMMENT = 'Raw source extracts from Epic Clarity, Strata, and Workday';
+CREATE SCHEMA BUH_HOL.CORE_DATA
+  COMMENT = 'Cleaned and conformed dimensional model';
+CREATE SCHEMA BUH_HOL.DATAMARTS
+  COMMENT = 'Aggregated reporting tables and datamart views';
+CREATE SCHEMA BUH_HOL.GOVERNANCE
+  COMMENT = 'Tags, masking policies, and row access policies';
 
 -- ============================================================
 -- 2. LAB ROLES
@@ -82,11 +93,15 @@ GRANT ALL ON ALL SCHEMAS IN DATABASE BUH_HOL TO ROLE BUH_LAB_ADMIN;
 GRANT USAGE ON ALL SCHEMAS IN DATABASE BUH_HOL TO ROLE BUH_LAB_ANALYST;
 GRANT USAGE ON ALL SCHEMAS IN DATABASE BUH_HOL TO ROLE BUH_LAB_CLINICIAN;
 
-GRANT USAGE ON WAREHOUSE BUH_PIPELINE_WH TO ROLE BUH_LAB_ADMIN;
-GRANT USAGE ON WAREHOUSE BUH_ANALYTICS_WH TO ROLE BUH_LAB_ADMIN;
+GRANT USAGE, OPERATE ON WAREHOUSE BUH_PIPELINE_WH TO ROLE BUH_LAB_ADMIN;
+GRANT USAGE, OPERATE ON WAREHOUSE BUH_ANALYTICS_WH TO ROLE BUH_LAB_ADMIN;
 GRANT USAGE ON WAREHOUSE BUH_ANALYTICS_WH TO ROLE BUH_LAB_ANALYST;
 GRANT USAGE ON WAREHOUSE BUH_ANALYTICS_WH TO ROLE BUH_LAB_CLINICIAN;
 
+-- Future grants at the DATABASE level so analysts/clinicians
+-- can read all new tables, dynamic tables, and views.
+-- Note: if schema-level future grants are added later for the
+-- same object type, they OVERRIDE these database-level grants.
 GRANT SELECT ON FUTURE TABLES IN DATABASE BUH_HOL TO ROLE BUH_LAB_ANALYST;
 GRANT SELECT ON FUTURE TABLES IN DATABASE BUH_HOL TO ROLE BUH_LAB_CLINICIAN;
 GRANT SELECT ON FUTURE DYNAMIC TABLES IN DATABASE BUH_HOL TO ROLE BUH_LAB_ANALYST;
@@ -104,6 +119,11 @@ USE SCHEMA BUH_HOL.INBOUND;
 -- -----------------------------------------------
 -- 3a. PATIENT - Epic Clarity patient demographics
 --     100 hand-crafted rows with realistic RI data
+--
+--     SSN column contains SYNTHETIC values only.
+--     In production, SSNs must NEVER be stored in
+--     plaintext. Script 04 (governance) applies a
+--     masking policy to this column.
 -- -----------------------------------------------
 CREATE OR REPLACE TABLE PATIENT (
     PAT_ID          VARCHAR(20)  NOT NULL,
@@ -644,21 +664,22 @@ SELECT
     r.po_dt
 FROM po_raw r
 JOIN dept_info d ON d.dept_id = (1000 + 1 + CASE
-    WHEN r.dept_pct < 18 THEN 2   -- Emergency Department
-    WHEN r.dept_pct < 30 THEN 1   -- Primary Care (mapped to Cardiology dept_id offset)
-    WHEN r.dept_pct < 39 THEN 0   -- Cardiology
-    WHEN r.dept_pct < 47 THEN 12  -- General Surgery
-    WHEN r.dept_pct < 54 THEN 4   -- OB/GYN
-    WHEN r.dept_pct < 61 THEN 14  -- Infectious Disease
-    WHEN r.dept_pct < 67 THEN 11  -- Gastroenterology
-    WHEN r.dept_pct < 73 THEN 5   -- Orthopedics
-    WHEN r.dept_pct < 78 THEN 9   -- Pulmonology
-    WHEN r.dept_pct < 83 THEN 8   -- Neurology
-    WHEN r.dept_pct < 87 THEN 3   -- Oncology
-    WHEN r.dept_pct < 91 THEN 7   -- Nephrology
-    WHEN r.dept_pct < 95 THEN 6   -- Behavioral Health
-    WHEN r.dept_pct < 98 THEN 10  -- Endocrinology
-    ELSE 13                        -- Rheumatology
+    -- Offset + 1001 = dept_id (e.g., offset 2 + 1001 = 1003 = Emergency Dept)
+    WHEN r.dept_pct < 18 THEN 2   -- 1003 Emergency Department
+    WHEN r.dept_pct < 30 THEN 1   -- 1002 Primary Care
+    WHEN r.dept_pct < 39 THEN 0   -- 1001 Cardiology
+    WHEN r.dept_pct < 47 THEN 12  -- 1013 General Surgery
+    WHEN r.dept_pct < 54 THEN 4   -- 1005 OB/GYN
+    WHEN r.dept_pct < 61 THEN 14  -- 1015 Infectious Disease
+    WHEN r.dept_pct < 67 THEN 11  -- 1012 Gastroenterology
+    WHEN r.dept_pct < 73 THEN 5   -- 1006 Orthopedics
+    WHEN r.dept_pct < 78 THEN 9   -- 1010 Pulmonology
+    WHEN r.dept_pct < 83 THEN 8   -- 1009 Neurology
+    WHEN r.dept_pct < 87 THEN 3   -- 1004 Oncology
+    WHEN r.dept_pct < 91 THEN 7   -- 1008 Nephrology
+    WHEN r.dept_pct < 95 THEN 6   -- 1007 Behavioral Health
+    WHEN r.dept_pct < 98 THEN 10  -- 1011 Endocrinology
+    ELSE 13                        -- 1014 Rheumatology
 END)
 JOIN vendors v ON v.idx = r.vendor_idx;
 
@@ -692,6 +713,6 @@ ORDER BY TBL;
 -- that was created in Step 0. Recreate it so later scripts
 -- can reference files via @LAB_REPO.
 CREATE OR REPLACE GIT REPOSITORY BUH_HOL.INBOUND.LAB_REPO
-  API_INTEGRATION = github_buh_lab
-  ORIGIN = 'https://github.com/daltonryan6/buh-hol.git';
+  ORIGIN = 'https://github.com/daltonryan6/buh-hol.git'
+  API_INTEGRATION = github_buh_lab;
 ALTER GIT REPOSITORY BUH_HOL.INBOUND.LAB_REPO FETCH;
