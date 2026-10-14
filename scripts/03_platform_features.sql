@@ -202,8 +202,8 @@ SELECT
     CLINICAL_DATA:vitals.heart_rate::INT       AS HEART_RATE,
     CLINICAL_DATA:vitals.bp_systolic::INT      AS BP_SYSTOLIC,
     CLINICAL_DATA:vitals.o2_sat::INT           AS O2_SAT,
-    ARRAY_SIZE(CLINICAL_DATA:allergies)        AS ALLERGY_COUNT,
-    ARRAY_SIZE(CLINICAL_DATA:medications)      AS MED_COUNT
+    CLINICAL_DATA:allergies                    AS ALLERGIES,
+    CLINICAL_DATA:medications                  AS MEDICATIONS
 FROM BUH_HOL.INBOUND.CLINICAL_DOCUMENTS;
 
 -- Query 2: LATERAL FLATTEN — explode medication arrays into rows
