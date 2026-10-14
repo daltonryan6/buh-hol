@@ -15,6 +15,8 @@
 
 USE DATABASE BUH_HOL;
 USE WAREHOUSE BUH_ANALYTICS_WH;
+-- NOTE: See Script 01 for why we use ACCOUNTADMIN in this lab.
+-- Production should use SYSADMIN for object creation.
 USE ROLE ACCOUNTADMIN;
 
 -- ============================================================
@@ -45,6 +47,7 @@ USE ROLE ACCOUNTADMIN;
 -- AGE is computed against a fixed reporting-period date ('2025-01-01'),
 -- NOT CURRENT_DATE(). Non-deterministic functions like CURRENT_DATE()
 -- prevent incremental refresh — a common gotcha with dynamic tables.
+-- MAINTENANCE: Update this date each year if reusing this lab.
 -- REFRESH_MODE = INCREMENTAL: simple projection, perfect for change-only processing
 CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.CORE_DATA.DIM_PATIENT
   TARGET_LAG = '1 minute'
@@ -276,10 +279,13 @@ LEFT JOIN BUH_HOL.CORE_DATA.FACT_DIAGNOSIS d
 WHERE e.ENCOUNTER_TYPE = 'Emergency';
 
 -- READMISSION_RISK: Patients with 2+ encounters within 30 days
--- TARGET_LAG = DOWNSTREAM: only refreshes when a downstream consumer queries it.
--- Perfect for analytics tables that don't need continuous freshness.
+-- TARGET_LAG = '15 minutes': analytics table, doesn't need sub-minute freshness.
+-- NOTE: DOWNSTREAM should only be used for INTERMEDIATE dynamic tables
+-- that have downstream DT consumers. Leaf tables (queried directly by
+-- users or BI tools) must have an explicit target lag, or they will
+-- NEVER auto-refresh.
 CREATE OR REPLACE DYNAMIC TABLE BUH_HOL.DATAMARTS.READMISSION_RISK
-  TARGET_LAG = DOWNSTREAM
+  TARGET_LAG = '15 minutes'
   REFRESH_MODE = INCREMENTAL
   WAREHOUSE = BUH_PIPELINE_WH
 AS
@@ -336,6 +342,9 @@ SELECT * FROM BUH_HOL.DATAMARTS.READMISSION_RISK ORDER BY DAYS_BETWEEN;
 --
 -- We set up the stream and task BEFORE inserting new data (Part F)
 -- so the stream is watching when the insert lands.
+-- IMPORTANT: Streams track changes that occur AFTER creation.
+-- SHOW_INITIAL_ROWS = FALSE means the stream does NOT capture
+-- existing rows — only new DML operations from this point forward.
 
 -- Audit log table
 CREATE OR REPLACE TABLE BUH_HOL.GOVERNANCE.PATIENT_AUDIT_LOG (
@@ -371,7 +380,10 @@ AS
         END
     FROM BUH_HOL.INBOUND.PATIENT_CHANGES;
 
--- Enable the task (tasks are created in suspended state)
+-- Enable the task (tasks are created in suspended state by default)
+-- NOTE: The role that owns the task must have EXECUTE TASK privilege.
+-- ACCOUNTADMIN has this globally. In production, grant it explicitly:
+--   GRANT EXECUTE TASK ON ACCOUNT TO ROLE BUH_LAB_ADMIN;
 ALTER TASK BUH_HOL.INBOUND.LOG_PATIENT_CHANGES RESUME;
 
 -- Verify the stream and task exist
@@ -392,7 +404,7 @@ INSERT INTO BUH_HOL.INBOUND.PATIENT
   (PAT_ID,PAT_MRN_ID,PAT_FIRST_NAME,PAT_LAST_NAME,BIRTH_DATE,SSN,
    ADD_LINE_1,CITY,STATE_ABBR,ZIP,HOME_PHONE,EMAIL_ADDRESS,LANGUAGE,SEX)
 VALUES
-  ('P200001','MRN-900001','jorge','medina','1958-11-20','111-00-2222',
+  ('P200001','MRN-900201','jorge','medina','1958-11-20','111-00-2222',
    '650 Elmwood Ave','Providence','RI','02907','4015550116','jmedina@example.com','Spanish','Male');
 
 -- New ED encounter
@@ -447,14 +459,20 @@ FROM TABLE(INFORMATION_SCHEMA.DYNAMIC_TABLE_REFRESH_HISTORY())
 ORDER BY REFRESH_START_TIME DESC
 LIMIT 20;
 
--- Pipeline graph - see all dynamic tables and their status
+-- Pipeline graph — simplest view in a lab setting
+SHOW DYNAMIC TABLES IN DATABASE BUH_HOL;
+
+-- Or for programmatic access:
 SELECT
     NAME,
+    SCHEMA_NAME,
+    REFRESH_MODE,
     TARGET_LAG,
     SCHEDULING_STATE
 FROM TABLE(INFORMATION_SCHEMA.DYNAMIC_TABLE_GRAPH_HISTORY())
 WHERE DATABASE_NAME = 'BUH_HOL'
-ORDER BY NAME;
+  AND VALID_TO IS NULL
+ORDER BY SCHEMA_NAME, NAME;
 
 
 -- ============================================================
@@ -462,17 +480,21 @@ ORDER BY NAME;
 -- ============================================================
 
 -- TARGET_LAG controls freshness, not schedule. Snowflake decides
--- WHEN to refresh. We used three different settings:
+-- WHEN to refresh. We used two different settings:
 --   '1 minute'   = CORE_DATA layer + ED_THROUGHPUT (real-time clinical)
---   '15 minutes' = DEPARTMENT_DASHBOARD (operational, doesn't need sub-minute)
---   DOWNSTREAM   = READMISSION_RISK (analytics — refresh only when queried)
+--   '15 minutes' = DEPARTMENT_DASHBOARD + READMISSION_RISK (operational/analytics)
 --
--- REFRESH_MODE controls HOW data is refreshed:
---   INCREMENTAL  = process only changed rows (most CORE_DATA tables + READMISSION_RISK)
---   ADAPTIVE     = incremental by default, auto-reinitializes on bulk loads
---                   (FACT_ENCOUNTER, ED_THROUGHPUT — handles extraction tools reloads)
---   FULL         = reprocess everything each refresh (DEPARTMENT_DASHBOARD —
---                   predictable cost for aggregation)
+-- DOWNSTREAM is for INTERMEDIATE tables only — it refreshes when a
+-- downstream dynamic table in the pipeline triggers. NOT on-demand
+-- or query-triggered. Leaf tables must use an explicit lag.
+--
+-- REFRESH_MODE best practice (as of 2025):
+--   ADAPTIVE     = RECOMMENDED DEFAULT for all incrementalizable workloads.
+--                   Uses incremental by default, auto-reinitializes on bulk loads.
+--   INCREMENTAL  = Forces pure incremental only. Use when you want to guarantee
+--                   no reinitialization and you control upstream load patterns.
+--   FULL         = Reprocesses everything. Use for unsupported constructs or
+--                   when aggregation over full dataset is predictable.
 --
 -- GOTCHA: Non-deterministic functions (CURRENT_DATE(), CURRENT_TIMESTAMP())
 -- force a table to FULL refresh mode. That's why DIM_PATIENT computes AGE
