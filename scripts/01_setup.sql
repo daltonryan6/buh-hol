@@ -4,7 +4,7 @@
 
   PREREQUISITES:
     - Snowflake trial or existing account with ACCOUNTADMIN
-    - No pre-configuration needed - this script creates everything
+    - API integration github_buh_lab created in Step 0
 
   WHAT THIS CREATES:
     - Warehouses: BUH_PIPELINE_WH (dynamic table refreshes),
@@ -684,3 +684,14 @@ ORDER BY TBL;
   STRATA_BUDGET        300
   WORKDAY_PURCHASES  2,000
 */
+
+-- ============================================================
+-- 5. RECONNECT GIT REPOSITORY
+-- ============================================================
+-- CREATE OR REPLACE DATABASE above drops the Git repo object
+-- that was created in Step 0. Recreate it so later scripts
+-- can reference files via @LAB_REPO.
+CREATE OR REPLACE GIT REPOSITORY BUH_HOL.INBOUND.LAB_REPO
+  API_INTEGRATION = github_buh_lab
+  ORIGIN = 'https://github.com/daltonryan6/buh-hol.git';
+ALTER GIT REPOSITORY BUH_HOL.INBOUND.LAB_REPO FETCH;

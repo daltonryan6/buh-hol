@@ -218,10 +218,11 @@ FROM BUH_HOL.INBOUND.CLINICAL_DOCUMENTS d,
 -- ---- Unstructured: read a PDF from the Git workspace ----
 
 -- The Git repo contains a sample discharge summary PDF.
--- PARSE_DOCUMENT requires a regular stage (not a Git repo stage),
--- so we copy the file first, then extract text from it.
+-- PARSE_DOCUMENT requires a regular stage with server-side encryption,
+-- so we copy the file from the Git repo stage first.
 
-CREATE OR REPLACE STAGE BUH_HOL.INBOUND.DOC_STAGE;
+CREATE OR REPLACE STAGE BUH_HOL.INBOUND.DOC_STAGE
+  ENCRYPTION = (TYPE = 'SNOWFLAKE_SSE');
 COPY FILES
   INTO @BUH_HOL.INBOUND.DOC_STAGE
   FROM @BUH_HOL.INBOUND.LAB_REPO/branches/main/docs/discharge_summary_sample.pdf;
