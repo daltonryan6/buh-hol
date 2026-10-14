@@ -340,21 +340,19 @@
           <p><img alt="Collapse and expand side panels" src="assets/img/collapse-panels.png"></p>
 
           <h3>0.2 Connect to the Lab's GitHub Repository</h3>
-          <p>Instead of downloading files, you'll connect Snowflake directly to the public GitHub repository. Copy and paste this prompt into Cortex Code:</p>
+          <p>First, create an API integration so Snowflake can talk to GitHub. Copy and paste this prompt into Cortex Code:</p>
           <div class="code-block">
-            <div class="code-header"><span>CoCo Prompt &ndash; Connect GitHub repo</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
-            <pre>Please connect my Snowflake account to a public GitHub repository
-so I can use it as a file source during this lab.
+            <div class="code-header"><span>CoCo Prompt &ndash; Create GitHub integration</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
+            <pre>Please create an API integration called github_buh_lab so I can
+connect Snowflake to GitHub during this lab.
 
-1. Create a database called BUH_HOL with schema INBOUND if it doesn't exist
-2. Create an API integration called github_buh_lab for GitHub HTTPS access,
-   allowing the prefix https://github.com/daltonryan6/
-3. Create a Git repository object called LAB_REPO in the
-   BUH_HOL.INBOUND schema pointing to:
-   https://github.com/daltonryan6/buh-hol
-4. Fetch the latest contents from the repository
-5. Confirm everything worked by listing the top-level files and folders
-   available in the main branch</pre>
+Use these settings:
+- API_PROVIDER = git_https_api
+- API_ALLOWED_PREFIXES = ('https://github.com/daltonryan6/')
+- ENABLED = TRUE
+
+After creating it, confirm the integration exists by running
+SHOW INTEGRATIONS LIKE 'github_buh_lab'.</pre>
           </div>
           <div class="callout callout-warn">
             <strong>Important:</strong> When CoCo asks for permission to run a SQL statement, click the <strong>Allow</strong> dropdown and select <strong>"Allow in this chat"</strong> so you won't be prompted again for that statement type.
@@ -386,7 +384,7 @@ so I can use it as a file source during this lab.
 
           <div class="checkpoint">
             <h4>Checkpoint</h4>
-            <p>CoCo panel open, GitHub repo connected (API integration + Git repo object created), workspace shows 7 SQL files in the scripts/ folder.</p>
+            <p>CoCo panel open, GitHub API integration created, Git workspace shows 7 SQL files in the scripts/ folder.</p>
           </div>
 
           <div class="step-nav">
@@ -662,7 +660,7 @@ Show me the top 20 results with their acuity classifications.</pre>
           <div class="code-block">
             <div class="code-header"><span>CoCo Prompt &ndash; ML / AI functions</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
             <pre>Run Part E of scripts/03_platform_features.sql. It uses
-SNOWFLAKE.CORTEX.COMPLETE to generate AI severity assessments
+SNOWFLAKE.CORTEX.COMPLETE to generate AI visit summaries
 for ED visits based on diagnosis, time in ED, and charges.
 
 Show me the results. Also mention what other ML functions are available
@@ -674,7 +672,7 @@ Show me the results. Also mention what other ML functions are available
 
           <div class="checkpoint">
             <h4>Checkpoint</h4>
-            <p>Zero-copy clone created and dropped. Resource monitor attached to warehouse. Query cache confirmed (second run = 0 bytes scanned). Python UDF classifying encounter acuity. AI-generated severity assessments for ED visits.</p>
+            <p>Zero-copy clone created and dropped. Resource monitor attached to warehouse. Query cache confirmed (second run = 0 bytes scanned). Python UDF classifying encounter acuity. AI-generated visit summaries for ED visits.</p>
           </div>
 
           <div class="step-nav">
@@ -691,28 +689,20 @@ Show me the results. Also mention what other ML functions are available
             <span class="badge badge-script">04_tags_and_governance.sql</span>
           </div>
 
-          <p>Copy and paste this prompt into Cortex Code to run the full governance script:</p>
+          <p>Copy and paste this prompt into Cortex Code to create tags and masking policies:</p>
           <div class="code-block">
             <div class="code-header"><span>CoCo Prompt &ndash; Tags and masking</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
             <pre>Open the file scripts/04_tags_and_governance.sql from the buh-hol
-Git workspace and run the full script. It creates governance tags,
+Git workspace and run Parts A through D. This creates governance tags,
 applies them to sensitive columns on the PATIENT table, creates
 masking policies, and attaches those policies to the tags.
 
-After execution, test the masking by running these three queries
-and showing me the results side by side:
-
-EXECUTE USING POLICY_CONTEXT(CURRENT_ROLE => 'BUH_LAB_ADMIN')
-SELECT PAT_FIRST_NAME, SSN, EMAIL_ADDRESS FROM BUH_HOL.INBOUND.PATIENT LIMIT 3;
-
-EXECUTE USING POLICY_CONTEXT(CURRENT_ROLE => 'BUH_LAB_CLINICIAN')
-SELECT PAT_FIRST_NAME, SSN, EMAIL_ADDRESS FROM BUH_HOL.INBOUND.PATIENT LIMIT 3;
-
-EXECUTE USING POLICY_CONTEXT(CURRENT_ROLE => 'BUH_LAB_ANALYST')
-SELECT PAT_FIRST_NAME, SSN, EMAIL_ADDRESS FROM BUH_HOL.INBOUND.PATIENT LIMIT 3;</pre>
+After execution, show me SHOW TAGS IN DATABASE BUH_HOL and
+SHOW MASKING POLICIES IN DATABASE BUH_HOL to confirm everything
+was created.</pre>
           </div>
           <div class="callout callout-info">
-            <strong>What's happening:</strong> CoCo creates tags, applies them to PII columns, then attaches masking policies to the tags. The POLICY_CONTEXT queries let you see the same data through three different roles without switching.
+            <strong>What's happening:</strong> CoCo creates tags, applies them to PII columns, then attaches masking policies to the tags. One policy applied to one tag protects every column that carries that tag &mdash; no per-column work needed.
           </div>
 
           <h3>4.1 Where can tags be applied?</h3>
@@ -747,22 +737,32 @@ ALTER TABLE BUH_HOL.INBOUND.PATIENT MODIFY COLUMN EMAIL_ADDRESS
           </div>
 
           <h3>4.4 Test masking across roles</h3>
+          <div class="callout callout-warn">
+            <strong>Instructor-led section:</strong> Your instructor will walk through this live. We switch to each role to show how the same query returns different results depending on who's asking. Run these statements one at a time in your worksheet.
+          </div>
           <div class="code-block">
-            <div class="code-header"><span>SQL &ndash; POLICY_CONTEXT testing</span><button class="copy-btn">📋 Copy</button></div>
-            <pre>-- ADMIN sees everything
-EXECUTE USING POLICY_CONTEXT(CURRENT_ROLE => 'BUH_LAB_ADMIN')
+            <div class="code-header"><span>SQL &ndash; Test masking by switching roles</span><button class="copy-btn">📋 Copy</button></div>
+            <pre>-- Disable secondary roles so masking sees ONLY the active role
+USE SECONDARY ROLES NONE;
+
+-- ADMIN sees everything
+USE ROLE BUH_LAB_ADMIN;
 SELECT PAT_FIRST_NAME, PAT_LAST_NAME, SSN, EMAIL_ADDRESS, BIRTH_DATE
 FROM BUH_HOL.INBOUND.PATIENT LIMIT 3;
 
 -- CLINICIAN sees names/email, SSN last-4, DOB visible
-EXECUTE USING POLICY_CONTEXT(CURRENT_ROLE => 'BUH_LAB_CLINICIAN')
+USE ROLE BUH_LAB_CLINICIAN;
 SELECT PAT_FIRST_NAME, PAT_LAST_NAME, SSN, EMAIL_ADDRESS, BIRTH_DATE
 FROM BUH_HOL.INBOUND.PATIENT LIMIT 3;
 
 -- ANALYST sees ***MASKED*** for all PII
-EXECUTE USING POLICY_CONTEXT(CURRENT_ROLE => 'BUH_LAB_ANALYST')
+USE ROLE BUH_LAB_ANALYST;
 SELECT PAT_FIRST_NAME, PAT_LAST_NAME, SSN, EMAIL_ADDRESS, BIRTH_DATE
-FROM BUH_HOL.INBOUND.PATIENT LIMIT 3;</pre>
+FROM BUH_HOL.INBOUND.PATIENT LIMIT 3;
+
+-- Restore full access for remaining lab steps
+USE ROLE ACCOUNTADMIN;
+USE SECONDARY ROLES ALL;</pre>
           </div>
 
           <div class="expected-output">

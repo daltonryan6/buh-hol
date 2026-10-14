@@ -145,7 +145,7 @@ ORDER BY TOTAL_CHARGES DESC;
 -- Prove it: check query history for cache hit
 SELECT QUERY_ID, QUERY_TEXT, BYTES_SCANNED, WAREHOUSE_NAME,
        EXECUTION_STATUS, TOTAL_ELAPSED_TIME
-FROM TABLE(INFORMATION_SCHEMA.QUERY_HISTORY_BY_SESSION())
+FROM TABLE(SNOWFLAKE.INFORMATION_SCHEMA.QUERY_HISTORY_BY_SESSION())
 WHERE QUERY_TEXT ILIKE '%DEPARTMENT_DASHBOARD%ORDER BY TOTAL_CHARGES%'
 ORDER BY START_TIME DESC
 LIMIT 2;
@@ -226,8 +226,7 @@ LIMIT 20;
 -- Snowflake Cortex ML functions run models directly in SQL.
 -- No infrastructure, no Python notebooks, no model deployment.
 
--- Classification: predict encounter type from charges and LOS
--- (using Cortex COMPLETE to demonstrate the AI capability)
+-- Use Cortex COMPLETE to generate AI visit summaries from ED data
 SELECT
     e.ENCOUNTER_ID,
     e.PATIENT_NAME,
@@ -235,12 +234,13 @@ SELECT
     e.ED_HOURS,
     e.TOTAL_CHARGES,
     SNOWFLAKE.CORTEX.COMPLETE(
-        'llama3.1-8b',
-        'Given this ED visit: diagnosis=' || COALESCE(e.PRIMARY_DIAGNOSIS, 'unknown')
-        || ', hours in ED=' || COALESCE(e.ED_HOURS::VARCHAR, 'N/A')
-        || ', charges=$' || COALESCE(e.TOTAL_CHARGES::VARCHAR, 'N/A')
-        || '. In one sentence, classify the severity (low/moderate/high/critical) and explain why.'
-    ) AS AI_SEVERITY_ASSESSMENT
+        'llama3.1-70b',
+        'You are a healthcare data analyst. Summarize this ED visit record in one sentence, '
+        || 'noting the diagnosis, time spent, and relative cost level: '
+        || 'diagnosis=' || COALESCE(e.PRIMARY_DIAGNOSIS, 'unknown')
+        || ', hours_in_ed=' || COALESCE(e.ED_HOURS::VARCHAR, 'N/A')
+        || ', total_charges=$' || COALESCE(e.TOTAL_CHARGES::VARCHAR, 'N/A')
+    ) AS AI_VISIT_SUMMARY
 FROM BUH_HOL.DATAMARTS.ED_THROUGHPUT e
 WHERE e.PRIMARY_DIAGNOSIS IS NOT NULL
 LIMIT 5;
