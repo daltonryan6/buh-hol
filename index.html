@@ -653,9 +653,9 @@ Show me the top 20 results with their acuity classifications.</pre>
             <div class="code-header"><span>CoCo Prompt &ndash; ML &amp; AI functions</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
             <pre>Run Part E of scripts/03_platform_features.sql. It does two things:
 
-1. Trains an ML CLASSIFICATION model on FACT_ENCOUNTER to predict
-   encounter type from charges and length of stay, then runs predictions
-   on high-charge visits so we can compare actual vs predicted.
+1. Trains an ML CLASSIFICATION model on READMISSION_RISK to predict
+   what type of return visit a patient will have, then runs predictions
+   on patients who returned within 7 days — actual vs predicted.
 
 2. Uses SNOWFLAKE.CORTEX.COMPLETE (an LLM) to generate plain-English
    visit summaries for ED encounters.
@@ -663,12 +663,12 @@ Show me the top 20 results with their acuity classifications.</pre>
 Run both sections and show me the results.</pre>
           </div>
           <div class="callout callout-info">
-            <strong>What this unlocks:</strong> <code>SNOWFLAKE.ML.CLASSIFICATION</code> trained a model and generated predictions &mdash; all in SQL, no Python needed. <code>SNOWFLAKE.CORTEX.COMPLETE</code> called an LLM to summarize records in plain English. Other built-in functions include <code>FORECAST</code> (time series), <code>ANOMALY_DETECTION</code>, <code>SENTIMENT</code>, <code>SUMMARIZE</code>, and <code>TRANSLATE</code>.
+            <strong>What this unlocks:</strong> <code>SNOWFLAKE.ML.CLASSIFICATION</code> trained a readmission predictor and generated predictions &mdash; all in SQL, no Python needed. <code>SNOWFLAKE.CORTEX.COMPLETE</code> called an LLM to summarize records in plain English. Other built-in functions include <code>FORECAST</code> (time series), <code>ANOMALY_DETECTION</code>, <code>SENTIMENT</code>, <code>SUMMARIZE</code>, and <code>TRANSLATE</code>.
           </div>
 
           <div class="checkpoint">
             <h4>Checkpoint</h4>
-            <p>Zero-copy clone created and recovered. Resource monitor attached to warehouse. Query cache confirmed (second run = 0 bytes scanned). Python UDF classifying encounter acuity. ML classification model trained and predicting encounter types. AI-generated visit summaries for ED visits.</p>
+            <p>Zero-copy clone created and recovered. Resource monitor attached to warehouse. Query cache confirmed (second run = 0 bytes scanned). Python UDF classifying encounter acuity. ML classification model predicting readmission types. AI-generated visit summaries for ED visits.</p>
           </div>
 
           <div class="step-nav">

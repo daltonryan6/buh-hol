@@ -224,33 +224,31 @@ LIMIT 20;
 --   2. SNOWFLAKE.CORTEX.*  — LLM-powered functions (complete, classify, sentiment)
 -- Both run inside Snowflake. No infrastructure, no data movement.
 
--- ---- ML: Classify encounters using SNOWFLAKE.ML.CLASSIFICATION ----
+-- ---- ML: Predict readmission type using SNOWFLAKE.ML.CLASSIFICATION ----
 
--- Step 1: Build a classification model that predicts encounter type
---         from charges and length of stay (trains on FACT_ENCOUNTER)
-CREATE OR REPLACE SNOWFLAKE.ML.CLASSIFICATION BUH_HOL.CORE_DATA.ENCOUNTER_CLASSIFIER(
-    INPUT_DATA => SYSTEM$REFERENCE('TABLE', 'BUH_HOL.CORE_DATA.FACT_ENCOUNTER'),
-    TARGET_COLNAME => 'ENCOUNTER_TYPE'
+-- Step 1: Train a classification model on READMISSION_RISK data.
+--         This predicts what type of return visit a patient will have.
+--         Training happens entirely inside Snowflake — no Python, no notebooks.
+CREATE OR REPLACE SNOWFLAKE.ML.CLASSIFICATION BUH_HOL.CORE_DATA.READMIT_CLASSIFIER(
+    INPUT_DATA => SYSTEM$REFERENCE('TABLE', 'BUH_HOL.DATAMARTS.READMISSION_RISK'),
+    TARGET_COLNAME => 'RETURN_TYPE',
+    CONFIG_OBJECT => {'on_error': 'skip'}
 );
 
--- Step 2: Predict encounter type for recent high-charge visits
+-- Step 2: Run predictions — compare actual return type vs model prediction
 SELECT
-    ENCOUNTER_ID,
-    DEPARTMENT_NAME,
-    TOTAL_CHARGES,
-    LOS_DAYS_OR_HOURS,
-    ENCOUNTER_TYPE AS ACTUAL_TYPE,
-    BUH_HOL.CORE_DATA.ENCOUNTER_CLASSIFIER!PREDICT(
-        INPUT_DATA => OBJECT_CONSTRUCT(
-            'TOTAL_CHARGES', TOTAL_CHARGES,
-            'LOS_DAYS_OR_HOURS', LOS_DAYS_OR_HOURS,
-            'DEPARTMENT_NAME', DEPARTMENT_NAME,
-            'IS_CLOSED', IS_CLOSED
-        )
-    ):class::VARCHAR AS PREDICTED_TYPE
-FROM BUH_HOL.CORE_DATA.FACT_ENCOUNTER
-WHERE TOTAL_CHARGES > 50000
-ORDER BY TOTAL_CHARGES DESC
+    PAT_ID,
+    PATIENT_NAME,
+    INITIAL_TYPE,
+    INITIAL_DEPT,
+    DAYS_BETWEEN,
+    RETURN_TYPE AS ACTUAL_RETURN_TYPE,
+    BUH_HOL.CORE_DATA.READMIT_CLASSIFIER!PREDICT(
+        INPUT_DATA => OBJECT_CONSTRUCT(*)
+    ):class::VARCHAR AS PREDICTED_RETURN_TYPE
+FROM BUH_HOL.DATAMARTS.READMISSION_RISK
+WHERE DAYS_BETWEEN <= 7
+ORDER BY DAYS_BETWEEN
 LIMIT 10;
 
 -- ---- AI: Generate visit summaries using SNOWFLAKE.CORTEX.COMPLETE ----
