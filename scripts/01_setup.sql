@@ -1,17 +1,19 @@
 /*=============================================================================
   Brown University Health - Hands-On Lab
-  Script 01: Setup - Database, Schemas, Roles, and Source Data
+  Script 01: Setup - Warehouses, Database, Schemas, Roles, and Source Data
 
   PREREQUISITES:
     - Snowflake trial or existing account with ACCOUNTADMIN
     - No pre-configuration needed - this script creates everything
 
   WHAT THIS CREATES:
-    - Database:  BUH_HOL
-    - Schemas:   INBOUND, CORE_DATA, DATAMARTS, GOVERNANCE
-    - Roles:     BUH_LAB_ADMIN, BUH_LAB_ANALYST, BUH_LAB_CLINICIAN
-    - Tables:    Epic Clarity, Strata budget, and Workday purchasing
-                 source tables with synthetic data
+    - Warehouses: BUH_PIPELINE_WH (dynamic table refreshes),
+                  BUH_ANALYTICS_WH (interactive queries and BI)
+    - Database:   BUH_HOL
+    - Schemas:    INBOUND, CORE_DATA, DATAMARTS, GOVERNANCE
+    - Roles:      BUH_LAB_ADMIN, BUH_LAB_ANALYST, BUH_LAB_CLINICIAN
+    - Tables:     Epic Clarity, Strata budget, and Workday purchasing
+                  source tables with synthetic data
 
   DATA VOLUMES:
     - PATIENT:           100 hand-crafted rows (Epic Clarity)
