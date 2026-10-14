@@ -149,7 +149,104 @@ LIMIT 2;
 
 
 -- ============================================================
--- PART D: Custom Python UDFs
+-- PART D: Semi-Structured & Unstructured Data
+-- ============================================================
+
+-- Healthcare generates massive amounts of JSON (FHIR APIs, device feeds,
+-- lab result bundles) and free-text documents (clinical notes, discharge
+-- summaries, radiology reports). Snowflake handles both natively — no
+-- ETL to flatten JSON, no external NLP services to parse documents.
+
+-- ---- Semi-structured: FHIR-style JSON in a VARIANT column ----
+
+-- VARIANT columns store JSON, Avro, Parquet, or XML natively.
+-- You query them with dot notation — no schema definition needed.
+
+CREATE OR REPLACE TABLE BUH_HOL.INBOUND.CLINICAL_DOCUMENTS (
+    PAT_ID         VARCHAR(20),
+    DOC_DATE       DATE,
+    CLINICAL_DATA  VARIANT,
+    CLINICAL_NOTE  VARCHAR(2000)
+);
+
+INSERT INTO BUH_HOL.INBOUND.CLINICAL_DOCUMENTS
+SELECT 'P100001', '2024-11-15', PARSE_JSON('{
+  "vitals": {"heart_rate": 88, "bp_systolic": 142, "bp_diastolic": 90, "temp_f": 98.6, "o2_sat": 96},
+  "allergies": ["Penicillin", "Sulfa drugs"],
+  "medications": [
+    {"name": "Lisinopril", "dose": "10mg", "frequency": "daily"},
+    {"name": "Metformin", "dose": "500mg", "frequency": "twice daily"}
+  ]
+}'), 'Patient presents with elevated blood pressure. History of hypertension and type 2 diabetes. Currently managed with Lisinopril and Metformin. Plan: increase Lisinopril to 20mg, recheck in 2 weeks.'
+UNION ALL
+SELECT 'P100002', '2024-11-20', PARSE_JSON('{
+  "vitals": {"heart_rate": 72, "bp_systolic": 118, "bp_diastolic": 76, "temp_f": 101.2, "o2_sat": 94},
+  "allergies": [],
+  "medications": [
+    {"name": "Amoxicillin", "dose": "875mg", "frequency": "twice daily"}
+  ]
+}'), 'Patient presents with fever, productive cough for 3 days. Chest X-ray shows right lower lobe infiltrate consistent with community-acquired pneumonia. Started on Amoxicillin. Follow up in 48 hours if no improvement.'
+UNION ALL
+SELECT 'P100003', '2024-11-22', PARSE_JSON('{
+  "vitals": {"heart_rate": 110, "bp_systolic": 95, "bp_diastolic": 60, "temp_f": 99.1, "o2_sat": 92},
+  "allergies": ["Aspirin", "Iodine contrast"],
+  "medications": [
+    {"name": "Heparin", "dose": "5000 units", "frequency": "every 8 hours"},
+    {"name": "Ondansetron", "dose": "4mg", "frequency": "as needed"}
+  ]
+}'), 'ED presentation with tachycardia and hypotension. CT angiogram confirms bilateral pulmonary embolism. Started on heparin drip. Admitting to ICU. Allergy to iodine contrast noted — premedicated with steroids.';
+
+-- Query 1: Dot notation — access nested JSON like regular columns
+SELECT
+    PAT_ID,
+    CLINICAL_DATA:vitals.heart_rate::INT       AS HEART_RATE,
+    CLINICAL_DATA:vitals.bp_systolic::INT      AS BP_SYSTOLIC,
+    CLINICAL_DATA:vitals.o2_sat::INT           AS O2_SAT,
+    ARRAY_SIZE(CLINICAL_DATA:allergies)        AS ALLERGY_COUNT,
+    ARRAY_SIZE(CLINICAL_DATA:medications)      AS MED_COUNT
+FROM BUH_HOL.INBOUND.CLINICAL_DOCUMENTS;
+
+-- Query 2: LATERAL FLATTEN — explode medication arrays into rows
+SELECT
+    d.PAT_ID,
+    m.value:name::VARCHAR      AS MEDICATION,
+    m.value:dose::VARCHAR      AS DOSE,
+    m.value:frequency::VARCHAR AS FREQUENCY
+FROM BUH_HOL.INBOUND.CLINICAL_DOCUMENTS d,
+    LATERAL FLATTEN(INPUT => d.CLINICAL_DATA:medications) m;
+
+-- ---- Unstructured: read a PDF from the Git workspace ----
+
+-- The Git repo contains a sample discharge summary PDF.
+-- PARSE_DOCUMENT extracts text from PDFs, images, and scanned documents
+-- directly from a stage — no external OCR tools needed.
+
+-- Extract the full text from the discharge summary
+SELECT SNOWFLAKE.CORTEX.PARSE_DOCUMENT(
+    @BUH_HOL.INBOUND.LAB_REPO/branches/main/docs/discharge_summary_sample.pdf,
+    {'mode': 'LAYOUT'}
+):content::VARCHAR AS EXTRACTED_TEXT;
+
+-- Ask questions against the extracted document
+SELECT SNOWFLAKE.CORTEX.EXTRACT_ANSWER(
+    (SELECT SNOWFLAKE.CORTEX.PARSE_DOCUMENT(
+        @BUH_HOL.INBOUND.LAB_REPO/branches/main/docs/discharge_summary_sample.pdf,
+        {'mode': 'LAYOUT'}
+    ):content::VARCHAR),
+    'What medications was the patient discharged on?'
+)[0]:answer::VARCHAR AS DISCHARGE_MEDICATIONS;
+
+SELECT SNOWFLAKE.CORTEX.EXTRACT_ANSWER(
+    (SELECT SNOWFLAKE.CORTEX.PARSE_DOCUMENT(
+        @BUH_HOL.INBOUND.LAB_REPO/branches/main/docs/discharge_summary_sample.pdf,
+        {'mode': 'LAYOUT'}
+    ):content::VARCHAR),
+    'What is the follow-up plan?'
+)[0]:answer::VARCHAR AS FOLLOW_UP_PLAN;
+
+
+-- ============================================================
+-- PART E: Custom Python UDFs
 -- ============================================================
 
 -- You can write Python, Java, JavaScript, or Scala functions
@@ -216,7 +313,7 @@ LIMIT 20;
 
 
 -- ============================================================
--- PART E: Cortex AI Functions
+-- PART F: Cortex AI Functions
 -- ============================================================
 
 -- Snowflake Cortex runs LLM-powered functions directly in SQL.

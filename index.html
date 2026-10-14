@@ -635,11 +635,33 @@ prove the second execution was a cache hit (BYTES_SCANNED = 0).
 Show me the query history comparison.</pre>
           </div>
 
-          <h3>3.4 Custom Python UDFs</h3>
+          <h3>3.4 Semi-Structured &amp; Unstructured Data</h3>
+          <p>Healthcare generates massive amounts of JSON (FHIR APIs, device feeds, lab bundles) and free-text documents (clinical notes, discharge summaries, radiology reports). Snowflake handles both natively.</p>
+          <div class="code-block">
+            <div class="code-header"><span>CoCo Prompt &ndash; Semi-structured &amp; unstructured data</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
+            <pre>Run Part D of scripts/03_platform_features.sql. It does three things:
+
+1. Creates a table with FHIR-style JSON (vitals, allergies, medications)
+   and queries it with dot notation and LATERAL FLATTEN.
+
+2. Reads a discharge summary PDF directly from the Git workspace using
+   SNOWFLAKE.CORTEX.PARSE_DOCUMENT — no external OCR tools needed.
+
+3. Asks questions against the extracted PDF text using
+   SNOWFLAKE.CORTEX.EXTRACT_ANSWER ("What medications was the patient
+   discharged on?" and "What is the follow-up plan?").
+
+Run all sections and show me the results.</pre>
+          </div>
+          <div class="callout callout-info">
+            <strong>What this shows:</strong> VARIANT columns store JSON natively &mdash; query nested fields with <code>:</code> dot notation, explode arrays with <code>LATERAL FLATTEN</code>. For unstructured documents, <code>PARSE_DOCUMENT</code> extracts text from PDFs and images on any stage, and <code>EXTRACT_ANSWER</code> lets you ask natural-language questions against that text. No external services, no data movement.
+          </div>
+
+          <h3>3.5 Custom Python UDFs</h3>
           <p>Write Python, Java, JavaScript, or Scala functions that run inside Snowflake&rsquo;s secure sandbox. No data leaves the platform &mdash; the function runs where the data lives.</p>
           <div class="code-block">
             <div class="code-header"><span>CoCo Prompt &ndash; Custom UDF</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
-            <pre>Run Part D of scripts/03_platform_features.sql. It creates a Python
+            <pre>Run Part E of scripts/03_platform_features.sql. It creates a Python
 UDF called CLINICAL_ACUITY_SCORE that classifies encounter severity
 based on type, length of stay, and charges. Then it runs the function
 against FACT_ENCOUNTER.
@@ -647,11 +669,11 @@ against FACT_ENCOUNTER.
 Show me the top 20 results with their acuity classifications.</pre>
           </div>
 
-          <h3>3.5 Cortex AI Functions</h3>
+          <h3>3.6 Cortex AI Functions</h3>
           <p>Snowflake Cortex runs LLM-powered functions directly in SQL &mdash; no API keys, no endpoints, no data movement. You pass text in, get intelligence out.</p>
           <div class="code-block">
             <div class="code-header"><span>CoCo Prompt &ndash; Cortex AI functions</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
-            <pre>Run Part E of scripts/03_platform_features.sql. It does two things:
+            <pre>Run Part F of scripts/03_platform_features.sql. It does two things:
 
 1. Uses SNOWFLAKE.CORTEX.CLASSIFY_TEXT to categorize ED diagnoses
    by clinical urgency (life-threatening, urgent, non-urgent) —
