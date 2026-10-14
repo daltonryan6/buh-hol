@@ -218,21 +218,26 @@ FROM BUH_HOL.INBOUND.CLINICAL_DOCUMENTS d,
 -- ---- Unstructured: read a PDF from the Git workspace ----
 
 -- The Git repo contains a sample discharge summary PDF.
--- PARSE_DOCUMENT extracts text from PDFs, images, and scanned documents
--- directly from a stage — no external OCR tools needed.
+-- PARSE_DOCUMENT requires a regular stage (not a Git repo stage),
+-- so we copy the file first, then extract text from it.
+
+CREATE OR REPLACE STAGE BUH_HOL.INBOUND.DOC_STAGE;
+COPY FILES
+  INTO @BUH_HOL.INBOUND.DOC_STAGE
+  FROM @BUH_HOL.INBOUND.LAB_REPO/branches/main/docs/discharge_summary_sample.pdf;
 
 -- Extract the full text from the discharge summary
 SELECT SNOWFLAKE.CORTEX.PARSE_DOCUMENT(
-    '@BUH_HOL.INBOUND.LAB_REPO/branches/main',
-    'docs/discharge_summary_sample.pdf',
+    '@BUH_HOL.INBOUND.DOC_STAGE',
+    'discharge_summary_sample.pdf',
     {'mode': 'LAYOUT'}
 ):content::VARCHAR AS EXTRACTED_TEXT;
 
 -- Ask questions against the extracted document
 SELECT SNOWFLAKE.CORTEX.EXTRACT_ANSWER(
     (SELECT SNOWFLAKE.CORTEX.PARSE_DOCUMENT(
-        '@BUH_HOL.INBOUND.LAB_REPO/branches/main',
-        'docs/discharge_summary_sample.pdf',
+        '@BUH_HOL.INBOUND.DOC_STAGE',
+        'discharge_summary_sample.pdf',
         {'mode': 'LAYOUT'}
     ):content::VARCHAR),
     'What medications was the patient discharged on?'
@@ -240,8 +245,8 @@ SELECT SNOWFLAKE.CORTEX.EXTRACT_ANSWER(
 
 SELECT SNOWFLAKE.CORTEX.EXTRACT_ANSWER(
     (SELECT SNOWFLAKE.CORTEX.PARSE_DOCUMENT(
-        '@BUH_HOL.INBOUND.LAB_REPO/branches/main',
-        'docs/discharge_summary_sample.pdf',
+        '@BUH_HOL.INBOUND.DOC_STAGE',
+        'discharge_summary_sample.pdf',
         {'mode': 'LAYOUT'}
     ):content::VARCHAR),
     'What is the follow-up plan?'
