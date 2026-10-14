@@ -42,6 +42,10 @@ SHOW DYNAMIC TABLES IN DATABASE BUH_HOL_DEV;
 -- But forgot the WHERE clause...
 DELETE FROM BUH_HOL_DEV.INBOUND.PATIENT;
 
+-- Capture the query ID of the bad DELETE — we will use this for recovery
+SET bad_query_id = LAST_QUERY_ID();
+SELECT $bad_query_id AS ACCIDENTAL_DELETE_QUERY_ID;
+
 -- Check the damage
 SELECT 'PROD' AS ENV, COUNT(*) AS PATIENTS FROM BUH_HOL.INBOUND.PATIENT
 UNION ALL
@@ -51,21 +55,25 @@ SELECT 'DEV',        COUNT(*)              FROM BUH_HOL_DEV.INBOUND.PATIENT;
 
 -- ---- Step 3: Time travel — see what existed before the mistake ----
 
--- Query the dev table as it was 30 seconds ago (before the DELETE)
+-- Time travel using the query ID: go back to the moment BEFORE that DELETE ran.
+-- This is more reliable than OFFSET (which depends on elapsed seconds).
 SELECT COUNT(*) AS PATIENTS_BEFORE_DELETE
-FROM BUH_HOL_DEV.INBOUND.PATIENT AT(OFFSET => -30);
--- All 100 patients are still visible through time travel.
+FROM BUH_HOL_DEV.INBOUND.PATIENT BEFORE(STATEMENT => $bad_query_id);
 
 -- Preview the lost data
 SELECT PAT_ID, PAT_FIRST_NAME, PAT_LAST_NAME
-FROM BUH_HOL_DEV.INBOUND.PATIENT AT(OFFSET => -30)
+FROM BUH_HOL_DEV.INBOUND.PATIENT BEFORE(STATEMENT => $bad_query_id)
 LIMIT 10;
+
+-- Alternative: time travel by offset (useful when you don't have the query ID)
+-- SELECT COUNT(*) FROM BUH_HOL_DEV.INBOUND.PATIENT AT(OFFSET => -60);
 
 
 -- ---- Step 4: Recover — restore the data from time travel ----
 
+-- Use the query ID to recover exactly to the moment before the bad statement
 INSERT INTO BUH_HOL_DEV.INBOUND.PATIENT
-SELECT * FROM BUH_HOL_DEV.INBOUND.PATIENT AT(OFFSET => -60);
+SELECT * FROM BUH_HOL_DEV.INBOUND.PATIENT BEFORE(STATEMENT => $bad_query_id);
 
 -- Verify full recovery
 SELECT 'PROD' AS ENV, COUNT(*) AS PATIENTS FROM BUH_HOL.INBOUND.PATIENT
