@@ -61,7 +61,6 @@ USE ROLE ACCOUNTADMIN;
 
 CREATE OR REPLACE ICEBERG TABLE BUH_HOL.DATAMARTS.DEPT_DASHBOARD_ICEBERG
   CATALOG = 'SNOWFLAKE'
-  EXTERNAL_VOLUME = ''
   BASE_LOCATION = 'dept_dashboard/'
 AS
 SELECT * FROM BUH_HOL.DATAMARTS.DEPARTMENT_DASHBOARD;
@@ -100,11 +99,7 @@ DESCRIBE TABLE BUH_HOL.DATAMARTS.DEPT_DASHBOARD_ICEBERG;
 
 -- RAW/INBOUND  -> Snowflake default (fast ingest, time travel, streams)
 -- CORE_DATA      -> Snowflake default (dynamic tables, joins, transforms)
--- DATAMARTS/Datamart-> Iceberg in OneLake (open format, Direct Lake, no SF compute)
---
--- Purview CAN scan Snowflake directly (tables, views, lineage).
--- BUT: Snowflake tags and Purview sensitivity labels are separate
--- systems that do not auto-sync. We will cover tags next.
+-- DATAMARTS      -> Iceberg in OneLake (open format, Direct Lake, no SF compute)
 
 -- ============================================================
 -- CHECKPOINT

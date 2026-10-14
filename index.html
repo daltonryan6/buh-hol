@@ -253,7 +253,7 @@
         <div class="flow-card" data-step="4">
           <div class="fc-icon">🏷️</div>
           <div class="fc-num fc-num-4">Step 4</div>
-          <div class="fc-title">Tags &amp; Masking</div>
+          <div class="fc-title">Tags &amp; Governance</div>
           <div class="fc-time">15 min</div>
         </div>
         <div class="flow-card" data-step="5">
@@ -379,11 +379,14 @@ so I can use it as a file source during this lab.
           <blockquote>
             <strong>Note:</strong> Do not modify the SQL script &mdash; in the next step, we'll ask Cortex Code to run it for us exactly as-is.
           </blockquote>
+          <div class="callout callout-warn">
+            <strong>If CoCo is slow:</strong> With many concurrent users, Cortex Code may take longer to respond. If a prompt doesn't return within 30 seconds, you can open the SQL file directly in the worksheet and click <strong>Run All</strong> to execute it manually. The results will be identical.
+          </div>
           <p><img alt="Workspace file explorer" src="assets/img/workspace-files.png"></p>
 
           <div class="checkpoint">
             <h4>Checkpoint</h4>
-            <p>CoCo panel open, GitHub repo connected (API integration + Git repo object created), workspace shows 6 SQL files in the scripts/ folder.</p>
+            <p>CoCo panel open, GitHub repo connected (API integration + Git repo object created), workspace shows 7 SQL files in the scripts/ folder.</p>
           </div>
 
           <div class="step-nav">
@@ -516,6 +519,11 @@ table and show me a few sample rows from each.</pre>
           </div>
           <div class="callout callout-info">
             <strong>REFRESH_MODE best practices:</strong> Use <strong>INCREMENTAL</strong> for simple projections, filters, and joins &mdash; it processes only changed rows and is the most cost-efficient. Use <strong>ADAPTIVE</strong> when upstream tables may receive bulk reloads (e.g., from extraction tools or INSERT OVERWRITE) &mdash; it auto-reinitializes then resumes incremental. Use <strong>FULL</strong> for heavy aggregations where a predictable full rebuild is simpler than tracking changes. Avoid non-deterministic functions like <code>CURRENT_DATE()</code> in dynamic table definitions &mdash; they prevent incremental refresh. Always set <code>REFRESH_MODE</code> explicitly; don't rely on <code>AUTO</code> in production.
+          </div>
+
+          <div class="checkpoint">
+            <h4>Pause here</h4>
+            <p>Make sure you see all 8 dynamic tables before continuing. Run <code>SHOW DYNAMIC TABLES IN DATABASE BUH_HOL</code> &mdash; you should see 5 in CORE_DATA and 3 in DATAMARTS, all with <code>SCHEDULING_STATE = 'ACTIVE'</code>.</p>
           </div>
 
           <h3>2.4 Streams + Tasks &mdash; event-driven complement</h3>
@@ -802,18 +810,22 @@ FROM BUH_HOL.INBOUND.PATIENT LIMIT 3;</pre>
           </div>
 
           <h3>5.3 Create an Iceberg table via CoCo</h3>
-          <p>Iceberg tables use the same SQL but store data in open Parquet format. Any Iceberg-compatible engine (Fabric, Spark, Trino) can read it. Copy and paste this prompt into Cortex Code:</p>
+          <p>Iceberg tables use the same SQL but store data in open Parquet format. Any Iceberg-compatible engine (Fabric, Spark, Trino) can read it. In this lab we create a <strong>Snowflake-managed</strong> Iceberg table (data stays in Snowflake storage). Copy and paste this prompt into Cortex Code:</p>
           <div class="code-block">
             <div class="code-header"><span>CoCo Prompt &ndash; Create Iceberg table</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
             <pre>Open the file scripts/05_powerbi_iceberg_fabric.sql from the buh-hol
-Git workspace and run Part B. It creates an Iceberg table from our
-DATAMARTS.DEPARTMENT_DASHBOARD dynamic table.
+Git workspace and run Part C. It creates a Snowflake-managed Iceberg
+table from our DATAMARTS.DEPARTMENT_DASHBOARD dynamic table.
 
 After execution, query the Iceberg table and show me the results
-sorted by TOTAL_CHARGES descending.</pre>
+sorted by TOTAL_CHARGES descending. Also run DESCRIBE TABLE on
+the Iceberg table so I can see its metadata.</pre>
           </div>
 
           <h3>5.4 When to use which table type</h3>
+          <div class="callout callout-info">
+            <strong>In production:</strong> You'd create an <code>EXTERNAL VOLUME</code> pointing to Microsoft OneLake, then write the Iceberg table there. Power BI reads via Direct Lake with zero Snowflake compute. The SQL is identical &mdash; you just add the <code>EXTERNAL_VOLUME</code> parameter. See Part D in the script for the full OneLake pattern.
+          </div>
           <table>
             <tr><th>Layer</th><th>Recommended</th><th>Why</th></tr>
             <tr><td>INBOUND</td><td>Snowflake default</td><td>Fast ingest, time travel, streams</td></tr>
@@ -896,7 +908,7 @@ pipeline is working end-to-end.</pre>
 
           <div class="checkpoint">
             <h4>Checkpoint</h4>
-            <p>Row counts match across all three layers (INBOUND &rarr; CORE_DATA &rarr; DATAMARTS). All 8 dynamic tables show ACTIVE scheduling state. Cortex AI generates clinical summaries from DATAMARTS data. Pipeline is verified end-to-end.</p>
+            <p>Row counts match across all three layers (INBOUND &rarr; CORE_DATA &rarr; DATAMARTS). All 8 dynamic tables show ACTIVE scheduling state. Pipeline is verified end-to-end.</p>
           </div>
 
           <div class="step-nav">
@@ -940,7 +952,7 @@ Confirm everything was cleaned up successfully.</pre>
 
           <p>Or run the cleanup SQL directly:</p>
           <div class="code-block">
-            <div class="code-header"><span>SQL &ndash; 06_cleanup.sql</span><button class="copy-btn">📋 Copy</button></div>
+            <div class="code-header"><span>SQL &ndash; 07_cleanup.sql</span><button class="copy-btn">📋 Copy</button></div>
             <pre>USE ROLE ACCOUNTADMIN;
 ALTER WAREHOUSE BUH_ANALYTICS_WH UNSET TAG BUH_HOL.GOVERNANCE.COST_CENTER;
 DROP DATABASE IF EXISTS BUH_HOL;

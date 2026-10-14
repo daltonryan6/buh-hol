@@ -23,8 +23,8 @@ USE ROLE ACCOUNTADMIN;
 
 -- A typical manual pipeline involves scheduled SQL transformations:
 --   1. Read from INBOUND (raw Clarity extracts)
---   2. Clean, join, and model into curated tables
---   3. Aggregate into gold reporting tables
+--   2. Clean, join, and model into CORE_DATA tables
+--   3. Aggregate into DATAMARTS reporting tables
 --   4. Log success/failure, handle retries
 --
 -- Each step is a script you schedule, monitor, and fix when it breaks.
