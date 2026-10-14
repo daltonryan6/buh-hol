@@ -216,45 +216,38 @@ LIMIT 20;
 
 
 -- ============================================================
--- PART E: ML & AI Functions
+-- PART E: Cortex AI Functions
 -- ============================================================
 
--- Snowflake has two families of built-in intelligence:
---   1. SNOWFLAKE.ML.*      — train/predict models (forecast, anomaly, classify)
---   2. SNOWFLAKE.CORTEX.*  — LLM-powered functions (complete, classify, sentiment)
--- Both run inside Snowflake. No infrastructure, no data movement.
+-- Snowflake Cortex runs LLM-powered functions directly in SQL.
+-- No API keys, no endpoints, no Python — just SQL.
+--
+-- In production, Snowflake also offers SNOWFLAKE.ML functions
+-- (FORECAST, ANOMALY_DETECTION, CLASSIFICATION, REGRESSION) that
+-- train and serve models entirely in-platform. Those require
+-- Enterprise Edition and are not available in trial accounts.
 
--- ---- ML: Predict readmission type using SNOWFLAKE.ML.CLASSIFICATION ----
+-- ---- Classify diagnoses by clinical urgency ----
 
--- Step 1: Train a classification model on READMISSION_RISK data.
---         This predicts what type of return visit a patient will have.
---         Training happens entirely inside Snowflake — no Python, no notebooks.
-CREATE OR REPLACE SNOWFLAKE.ML.CLASSIFICATION BUH_HOL.CORE_DATA.READMIT_CLASSIFIER(
-    INPUT_DATA => SYSTEM$REFERENCE('TABLE', 'BUH_HOL.DATAMARTS.READMISSION_RISK'),
-    TARGET_COLNAME => 'RETURN_TYPE',
-    CONFIG_OBJECT => {'on_error': 'skip'}
-);
-
--- Step 2: Run predictions — compare actual return type vs model prediction
+-- CLASSIFY_TEXT uses an LLM to categorize free-text into labels you define.
+-- No training step needed — just pass the text and the categories.
 SELECT
-    PAT_ID,
-    PATIENT_NAME,
-    INITIAL_TYPE,
-    INITIAL_DEPT,
-    DAYS_BETWEEN,
-    RETURN_TYPE AS ACTUAL_RETURN_TYPE,
-    BUH_HOL.CORE_DATA.READMIT_CLASSIFIER!PREDICT(
-        INPUT_DATA => OBJECT_CONSTRUCT(*)
-    ):class::VARCHAR AS PREDICTED_RETURN_TYPE
-FROM BUH_HOL.DATAMARTS.READMISSION_RISK
-WHERE DAYS_BETWEEN <= 7
-ORDER BY DAYS_BETWEEN
+    e.ENCOUNTER_ID,
+    e.PATIENT_NAME,
+    e.PRIMARY_DIAGNOSIS,
+    e.ED_HOURS,
+    e.TOTAL_CHARGES,
+    SNOWFLAKE.CORTEX.CLASSIFY_TEXT(
+        e.PRIMARY_DIAGNOSIS,
+        ['Life-threatening', 'Urgent', 'Non-urgent']
+    ):label::VARCHAR AS URGENCY_LEVEL
+FROM BUH_HOL.DATAMARTS.ED_THROUGHPUT e
+WHERE e.PRIMARY_DIAGNOSIS IS NOT NULL
 LIMIT 10;
 
--- ---- AI: Generate visit summaries using SNOWFLAKE.CORTEX.COMPLETE ----
+-- ---- Generate visit summaries using CORTEX.COMPLETE ----
 
--- Cortex LLM functions call hosted models directly in SQL.
--- No API keys, no endpoints, no Python — just SQL.
+-- COMPLETE calls a hosted LLM to generate free-text output.
 SELECT
     e.ENCOUNTER_ID,
     e.PATIENT_NAME,
@@ -273,7 +266,8 @@ FROM BUH_HOL.DATAMARTS.ED_THROUGHPUT e
 WHERE e.PRIMARY_DIAGNOSIS IS NOT NULL
 LIMIT 5;
 
--- Other built-in functions:
---   ML:  SNOWFLAKE.ML.FORECAST(), ANOMALY_DETECTION(), REGRESSION()
---   AI:  SNOWFLAKE.CORTEX.SENTIMENT(), CLASSIFY_TEXT(), SUMMARIZE(),
---        EXTRACT_ANSWER(), TRANSLATE()
+-- Other Cortex AI functions available in SQL:
+--   SNOWFLAKE.CORTEX.SENTIMENT()       — positive/negative/neutral
+--   SNOWFLAKE.CORTEX.SUMMARIZE()       — condense long text
+--   SNOWFLAKE.CORTEX.EXTRACT_ANSWER()  — Q&A over text
+--   SNOWFLAKE.CORTEX.TRANSLATE()       — language translation

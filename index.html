@@ -647,15 +647,15 @@ against FACT_ENCOUNTER.
 Show me the top 20 results with their acuity classifications.</pre>
           </div>
 
-          <h3>3.5 ML &amp; AI Functions</h3>
-          <p>Snowflake has two families of built-in intelligence: <strong>ML functions</strong> that train and predict models entirely in SQL, and <strong>Cortex AI functions</strong> that call hosted LLMs directly. Both run inside Snowflake &mdash; no APIs, no infrastructure, no data movement.</p>
+          <h3>3.5 Cortex AI Functions</h3>
+          <p>Snowflake Cortex runs LLM-powered functions directly in SQL &mdash; no API keys, no endpoints, no data movement. You pass text in, get intelligence out.</p>
           <div class="code-block">
-            <div class="code-header"><span>CoCo Prompt &ndash; ML &amp; AI functions</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
+            <div class="code-header"><span>CoCo Prompt &ndash; Cortex AI functions</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
             <pre>Run Part E of scripts/03_platform_features.sql. It does two things:
 
-1. Trains an ML CLASSIFICATION model on READMISSION_RISK to predict
-   what type of return visit a patient will have, then runs predictions
-   on patients who returned within 7 days — actual vs predicted.
+1. Uses SNOWFLAKE.CORTEX.CLASSIFY_TEXT to categorize ED diagnoses
+   by clinical urgency (life-threatening, urgent, non-urgent) —
+   no training step needed, just pass the text and the labels.
 
 2. Uses SNOWFLAKE.CORTEX.COMPLETE (an LLM) to generate plain-English
    visit summaries for ED encounters.
@@ -663,12 +663,12 @@ Show me the top 20 results with their acuity classifications.</pre>
 Run both sections and show me the results.</pre>
           </div>
           <div class="callout callout-info">
-            <strong>What this unlocks:</strong> <code>SNOWFLAKE.ML.CLASSIFICATION</code> trained a readmission predictor and generated predictions &mdash; all in SQL, no Python needed. <code>SNOWFLAKE.CORTEX.COMPLETE</code> called an LLM to summarize records in plain English. Other built-in functions include <code>FORECAST</code> (time series), <code>ANOMALY_DETECTION</code>, <code>SENTIMENT</code>, <code>SUMMARIZE</code>, and <code>TRANSLATE</code>.
+            <strong>What this unlocks:</strong> <code>CLASSIFY_TEXT</code> categorized diagnoses into urgency levels with zero training &mdash; just SQL. <code>COMPLETE</code> generated plain-English summaries from structured data. Other Cortex functions include <code>SENTIMENT</code>, <code>SUMMARIZE</code>, <code>EXTRACT_ANSWER</code>, and <code>TRANSLATE</code>. For full model training (forecast, anomaly detection, classification, regression), Snowflake ML functions are available on Enterprise Edition.
           </div>
 
           <div class="checkpoint">
             <h4>Checkpoint</h4>
-            <p>Zero-copy clone created and recovered. Resource monitor attached to warehouse. Query cache confirmed (second run = 0 bytes scanned). Python UDF classifying encounter acuity. ML classification model predicting readmission types. AI-generated visit summaries for ED visits.</p>
+            <p>Zero-copy clone created and recovered. Resource monitor attached to warehouse. Query cache confirmed (second run = 0 bytes scanned). Python UDF classifying encounter acuity. Cortex AI classifying diagnoses by urgency and generating visit summaries.</p>
           </div>
 
           <div class="step-nav">
@@ -930,7 +930,7 @@ pipeline is working end-to-end.</pre>
             <tr><td>Zero-Copy Cloning</td><td>Instant database copies for dev/test environments &ndash; free until you write to the clone</td></tr>
             <tr><td>Resource Monitors</td><td>Credit quotas with auto-suspend &ndash; no noisy neighbors between workloads</td></tr>
             <tr><td>Query Caching</td><td>Three cache layers &ndash; identical PBI queries hit result cache (free, instant)</td></tr>
-            <tr><td>Custom UDFs &amp; ML</td><td>Python/Java functions + Cortex AI/ML run where the data lives &ndash; no data movement</td></tr>
+            <tr><td>Custom UDFs &amp; Cortex AI</td><td>Python functions + LLM-powered classification and summarization run where the data lives &ndash; no data movement</td></tr>
             <tr><td>Power BI / Iceberg</td><td>Write DATAMARTS as Iceberg to OneLake; PBI reads via Direct Lake, no SF compute</td></tr>
             <tr><td>Tags &amp; Masking</td><td>Tag PII columns; attach masking to the tag &ndash; one policy protects everything</td></tr>
           </table>
