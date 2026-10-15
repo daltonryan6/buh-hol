@@ -380,15 +380,16 @@ FROM BUH_HOL.DATAMARTS.ED_THROUGHPUT e
 WHERE e.PRIMARY_DIAGNOSIS IS NOT NULL
 LIMIT 5;
 
--- Cortex AI functions available in SQL (use AI_* canonical names):
---   AI_CLASSIFY()       — classify text into your categories
---   AI_COMPLETE()       — general LLM generation (replaces CORTEX.COMPLETE)
---   AI_EXTRACT()        — extract structured data from text
---   AI_FILTER()         — boolean LLM filter
---   AI_PARSE_DOCUMENT() — extract text/layout from documents
+-- Cortex AI functions available in SQL (canonical AI_* names):
+--   AI_CLASSIFY()        -- classify text into categories (used above)
+--   AI_COMPLETE()        -- general LLM generation (used above)
+--   AI_PARSE_DOCUMENT()  -- extract text/layout from documents (used in Part D)
+--   AI_SENTIMENT()       -- sentiment analysis
+--   AI_SUMMARIZE()       -- text summarization
+--   AI_TRANSLATE()       -- language translation
+--   EXTRACT_ANSWER()     -- question answering over text (used in Part D)
 --
--- Legacy functions still available (being deprecated end of 2026):
---   SNOWFLAKE.CORTEX.SENTIMENT(), SUMMARIZE(), EXTRACT_ANSWER(), TRANSLATE()
+-- See docs: https://docs.snowflake.com/en/guides-overview-ai-features
 
 -- ============================================================
 -- Beyond Cortex AI: Snowflake ML Functions
