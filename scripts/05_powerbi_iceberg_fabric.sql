@@ -61,20 +61,10 @@ USE ROLE ACCOUNTADMIN;
 -- PART C: Iceberg table - hands-on
 -- ============================================================
 
--- Iceberg tables use the same SQL as regular tables, but data is
--- stored in open Parquet/Iceberg format.
---
--- This CTAS creates a Snowflake-MANAGED Iceberg table. The data lives
--- in Snowflake-managed storage, so only Snowflake can query it — just
--- like a regular table, but using the Iceberg format internally.
---
--- To make data readable by external engines (Fabric Direct Lake, Spark,
--- Trino), you must specify an EXTERNAL_VOLUME pointing to YOUR cloud
--- storage or OneLake. See Part D for that pattern.
---
--- Iceberg tables support most Snowflake SQL (SELECT, INSERT, CTAS, MERGE,
--- UPDATE, DELETE). Some advanced features like Search Optimization may
--- not be available. Check the Snowflake docs for current feature parity.
+-- Snowflake-managed Iceberg: Snowflake manages the catalog and storage.
+-- Other Iceberg setups can use your cloud storage and/or an external catalog.
+-- Both use the Iceberg format; the difference is who manages the storage/catalog.
+-- Supported external engines can also access Snowflake-managed tables via Horizon Catalog.
 
 CREATE OR REPLACE ICEBERG TABLE BUH_HOL.DATAMARTS.DEPT_DASHBOARD_ICEBERG
   CATALOG = 'SNOWFLAKE'
