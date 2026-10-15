@@ -167,7 +167,7 @@ LIMIT 2;
 -- ---- Semi-structured: FHIR-style JSON in a VARIANT column ----
 
 -- VARIANT columns store JSON, Avro, Parquet, or XML natively.
--- You query them with dot notation — no schema definition needed.
+-- You query them with : colon notation — no schema definition needed.
 
 CREATE OR REPLACE TABLE BUH_HOL.INBOUND.CLINICAL_DOCUMENTS (
     PAT_ID         VARCHAR(20),
@@ -203,7 +203,7 @@ SELECT 'P100003', '2024-11-22', PARSE_JSON('{
   ]
 }'), 'ED presentation with tachycardia and hypotension. CT angiogram confirms bilateral pulmonary embolism. Started on heparin drip. Admitting to ICU. Allergy to iodine contrast noted — premedicated with steroids.';
 
--- Query 1: Dot notation — access nested JSON like regular columns
+-- Query 1: Colon notation — access nested JSON like regular columns
 SELECT
     PAT_ID,
     CLINICAL_DATA:vitals.heart_rate::INT       AS HEART_RATE,

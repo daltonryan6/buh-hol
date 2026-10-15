@@ -650,7 +650,7 @@ Show me the query history comparison.</pre>
             <pre>Run Part D of scripts/03_platform_features.sql. It does three things:
 
 1. Creates a table with FHIR-style JSON (vitals, allergies, medications)
-   and queries it with dot notation and LATERAL FLATTEN.
+   and queries it with colon notation and LATERAL FLATTEN.
 
 2. Reads a discharge summary PDF using AI_PARSE_DOCUMENT — no
    external OCR tools needed.
@@ -662,7 +662,7 @@ Show me the query history comparison.</pre>
 Run all sections and show me the results.</pre>
           </div>
           <div class="callout callout-info">
-            <strong>What this shows:</strong> VARIANT columns store JSON natively &mdash; query nested fields with <code>:</code> dot notation, explode arrays with <code>LATERAL FLATTEN</code>. For unstructured documents, <code>AI_PARSE_DOCUMENT</code> extracts text from PDFs and images stored on any Snowflake stage, and <code>EXTRACT_ANSWER</code> lets you ask natural-language questions against that text. No external services, no data movement.
+            <strong>What this shows:</strong> VARIANT columns store JSON natively &mdash; query nested fields with <code>:</code> colon notation, explode arrays with <code>LATERAL FLATTEN</code>. For unstructured documents, <code>AI_PARSE_DOCUMENT</code> extracts text from PDFs and images stored on any Snowflake stage, and <code>EXTRACT_ANSWER</code> lets you ask natural-language questions against that text. No external services, no data movement.
           </div>
 
           <h3>3.5 Custom Python UDFs</h3>
@@ -709,7 +709,7 @@ Run both sections and show me the results.</pre>
 
           <div class="checkpoint">
             <h4>Checkpoint</h4>
-            <p>Zero-copy clone created and recovered. Resource monitor attached to warehouse. Query cache confirmed (second run = 0 bytes scanned). Semi-structured JSON queried with dot notation and LATERAL FLATTEN. PDF parsed and questions answered with AI. Python UDF classifying encounter acuity. Cortex AI classifying diagnoses by urgency and generating visit summaries.</p>
+            <p>Zero-copy clone created and recovered. Resource monitor attached to warehouse. Query cache confirmed (second run = 0 bytes scanned). Semi-structured JSON queried with colon notation and LATERAL FLATTEN. PDF parsed and questions answered with AI. Python UDF classifying encounter acuity. Cortex AI classifying diagnoses by urgency and generating visit summaries.</p>
           </div>
 
           <div class="step-nav">
