@@ -452,6 +452,8 @@ header .pill {
   color: #1E40AF;
 }
 .callout strong { display: block; margin-bottom: 4px; }
+.callout p strong { display: inline; margin-bottom: 0; }
+.callout li strong { display: inline; margin-bottom: 0; }
 .callout-info { border-left-color: #3B82F6; background: #EFF6FF; color: #1E40AF; }
 .callout-warn { border-left-color: #F59E0B; background: #FEF3C7; color: #92400E; }
 .callout-success { border-left-color: #22C55E; background: #F0FDF4; color: #166534; }
