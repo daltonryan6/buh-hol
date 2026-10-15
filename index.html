@@ -756,25 +756,22 @@ was created.</pre>
           <p>Tags <strong>cannot</strong> be applied to individual rows. They <strong>can</strong> be applied to users, roles, stages, warehouses, and many other object types.</p>
 
           <h3>4.2 Tag Clarity source columns</h3>
-          <p>Run Parts B and C. The script tags sensitive columns on <code>INBOUND.PATIENT</code> using Clarity column names:</p>
-          <div class="code-block">
-            <div class="code-header"><span>SQL &ndash; Apply PII tags</span><button class="copy-btn">📋 Copy</button></div>
-            <pre>ALTER TABLE BUH_HOL.INBOUND.PATIENT MODIFY COLUMN SSN
+          <div class="callout callout-warn">
+            <strong>Worksheet walkthrough:</strong> Open <code>scripts/04_tags_and_governance.sql</code> in your worksheet. We'll walk through sections 4.2 through 4.5 block by block, running the SQL directly to see tags, masking, and row access policies in action.
+          </div>
+          <p>Parts B and C tag sensitive columns on <code>INBOUND.PATIENT</code> using Clarity column names:</p>
+          <pre style="background:#F1F5F9; padding:12px 16px; border-radius:8px; font-size:12px; color:#334155; overflow-x:auto; margin:12px 0;">ALTER TABLE BUH_HOL.INBOUND.PATIENT MODIFY COLUMN SSN
   SET TAG BUH_HOL.GOVERNANCE.PII_TYPE = 'SSN';
 ALTER TABLE BUH_HOL.INBOUND.PATIENT MODIFY COLUMN PAT_MRN_ID
   SET TAG BUH_HOL.GOVERNANCE.PII_TYPE = 'MRN';
 ALTER TABLE BUH_HOL.INBOUND.PATIENT MODIFY COLUMN EMAIL_ADDRESS
   SET TAG BUH_HOL.GOVERNANCE.PII_TYPE = 'EMAIL';
 -- ... and PAT_FIRST_NAME, PAT_LAST_NAME, HOME_PHONE, ADD_LINE_1, BIRTH_DATE</pre>
-          </div>
 
           <h3>4.3 Tag-based masking</h3>
           <p>The key pattern: attach a masking policy to a <strong>tag</strong>, not individual columns. Every column with that tag is automatically protected.</p>
-          <div class="code-block">
-            <div class="code-header"><span>SQL &ndash; One policy protects all PII</span><button class="copy-btn">📋 Copy</button></div>
-            <pre>ALTER TAG BUH_HOL.GOVERNANCE.PII_TYPE SET
+          <pre style="background:#F1F5F9; padding:12px 16px; border-radius:8px; font-size:12px; color:#334155; overflow-x:auto; margin:12px 0;">ALTER TAG BUH_HOL.GOVERNANCE.PII_TYPE SET
   MASKING POLICY BUH_HOL.GOVERNANCE.MASK_PII_STRING;</pre>
-          </div>
 
           <h3>4.4 Test masking across roles</h3>
           <div class="callout callout-warn">
