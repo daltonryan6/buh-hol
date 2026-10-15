@@ -81,15 +81,15 @@ DESCRIBE TABLE BUH_HOL.DATAMARTS.DEPT_DASHBOARD_ICEBERG;
 SHOW ICEBERG TABLES LIKE 'DEPT_DASHBOARD_ICEBERG' IN SCHEMA BUH_HOL.DATAMARTS;
 
 -- ============================================================
--- PART D: OneLake integration (reference - not hands-on)
+-- PART D: OneLake integration (reference only)
 -- ============================================================
 
--- To make Iceberg data readable by Power BI via Direct Lake, you write
--- to an external volume pointing at OneLake instead of Snowflake-managed storage.
---
--- NOTE: The Snowflake-to-OneLake integration is evolving. The exact
--- external volume syntax and authentication setup may differ from what's
--- shown here. Check the latest Snowflake docs before implementing.
+-- This pattern uses Snowflake as the Iceberg catalog and stores the
+-- table files in OneLake through an external volume.
+-- OneLake can expose Iceberg tables as Delta-compatible tables for
+-- Fabric workloads, including supported Direct Lake scenarios.
+-- The example below is illustrative; follow the current setup guide
+-- for the OneLake URL, permissions, and authentication.
 --
 -- CREATE EXTERNAL VOLUME onelake_vol
 -- STORAGE_LOCATIONS = (
@@ -111,13 +111,18 @@ SHOW ICEBERG TABLES LIKE 'DEPT_DASHBOARD_ICEBERG' IN SCHEMA BUH_HOL.DATAMARTS;
 -- PART E: When to use which table type
 -- ============================================================
 
--- RAW/INBOUND  -> Snowflake native (fast ingest, time travel, streams, cloning)
---                 Why not Iceberg? Full feature set needed for ingest layer.
--- CORE_DATA    -> Snowflake native (dynamic tables, joins, transforms)
---                 Why not Iceberg? Dynamic tables don't target Iceberg today.
--- DATAMARTS    -> Iceberg on external storage / OneLake
---                 Why Iceberg? Open format, Direct Lake reads, no SF compute for BI.
---                 Trade-off: More setup, some feature limitations.
+-- RAW/INBOUND -> Snowflake native
+--                 Simple Snowflake-first ingestion and broad native features.
+--
+-- CORE_DATA   -> Snowflake native when native Dynamic Tables or broader
+--                 Snowflake feature support is the priority.
+--                 Dynamic Iceberg Tables are also available; evaluate their
+--                 additional requirements and limitations.
+--
+-- DATAMARTS   -> Iceberg in OneLake when Fabric interoperability is a goal.
+--                 Fabric can use OneLake's Iceberg-to-Delta compatibility.
+--                 Power BI reads OneLake directly; Snowflake compute is still
+--                 used for Snowflake-side writes and transformations.
 
 -- ============================================================
 -- CHECKPOINT
