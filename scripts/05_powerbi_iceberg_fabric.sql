@@ -7,6 +7,7 @@
 
   TIME: ~15 minutes (one hands-on Iceberg CTAS + guided discussion)
   PREREQUISITE: Run 01_setup.sql and 02_dynamic_tables.sql first
+                (DATAMARTS.DEPARTMENT_DASHBOARD must exist)
 =============================================================================*/
 
 USE DATABASE BUH_HOL;
@@ -31,7 +32,9 @@ USE ROLE ACCOUNTADMIN;
 
 -- OPTION 3: Snowflake + OneLake + Direct Lake (Fabric)
 --   Snowflake writes Iceberg tables to Microsoft OneLake
---   PBI reads Parquet files via Direct Lake - no Snowflake warehouse
+--   PBI reads Parquet files via Direct Lake — no SF warehouse for BI reads.
+--   Snowflake still uses a warehouse to WRITE/REFRESH the Iceberg table,
+--   but that's a scheduled pipeline cost, not per-dashboard-interaction.
 --   Pro: No SF compute for BI reads, open format
 --   Con: Requires Fabric capacity, setup complexity
 --   Best for: Minimizing Snowflake compute for BI workloads
@@ -41,14 +44,17 @@ USE ROLE ACCOUNTADMIN;
 -- ============================================================
 
 -- All Fabric workloads share one Capacity Unit (CU) pool.
--- Direct Lake reads, Dataflows, Spark, SQL endpoints - all pull
--- from the same pool. If the pool is exhausted, workloads throttle.
+-- Direct Lake reads, Dataflows, Spark, SQL endpoints — all pull
+-- from the same pool. If the pool is exhausted:
+--   - Interactive queries slow down or queue
+--   - Background refreshes get delayed
+--   - In extreme cases, operations can be rejected entirely
 --
 -- CHEAPEST PATH for BUH:
 --   1. Keep pipeline (INBOUND -> CORE_DATA -> DATAMARTS) in Snowflake
 --      using dynamic tables (you just built this!)
 --   2. Write only the DATAMARTS layer out as Iceberg to OneLake
---   3. Power BI reads from Direct Lake - no Snowflake queries
+--   3. Power BI reads from Direct Lake — no Snowflake queries
 --   4. Size Fabric capacity for BI read load only
 
 -- ============================================================
@@ -56,8 +62,19 @@ USE ROLE ACCOUNTADMIN;
 -- ============================================================
 
 -- Iceberg tables use the same SQL as regular tables, but data is
--- stored in open Parquet format with Iceberg metadata. Any engine
--- that reads Iceberg (Fabric, Spark, Trino) can access it.
+-- stored in open Parquet/Iceberg format.
+--
+-- This CTAS creates a Snowflake-MANAGED Iceberg table. The data lives
+-- in Snowflake-managed storage, so only Snowflake can query it — just
+-- like a regular table, but using the Iceberg format internally.
+--
+-- To make data readable by external engines (Fabric Direct Lake, Spark,
+-- Trino), you must specify an EXTERNAL_VOLUME pointing to YOUR cloud
+-- storage or OneLake. See Part D for that pattern.
+--
+-- Iceberg tables support most Snowflake SQL (SELECT, INSERT, CTAS, MERGE,
+-- UPDATE, DELETE). Some advanced features like Search Optimization may
+-- not be available. Check the Snowflake docs for current feature parity.
 
 CREATE OR REPLACE ICEBERG TABLE BUH_HOL.DATAMARTS.DEPT_DASHBOARD_ICEBERG
   CATALOG = 'SNOWFLAKE'
@@ -67,14 +84,22 @@ SELECT * FROM BUH_HOL.DATAMARTS.DEPARTMENT_DASHBOARD;
 -- Query it just like a regular table
 SELECT * FROM BUH_HOL.DATAMARTS.DEPT_DASHBOARD_ICEBERG ORDER BY TOTAL_CHARGES DESC;
 
--- See the Iceberg metadata
+-- Column metadata (same as any table)
 DESCRIBE TABLE BUH_HOL.DATAMARTS.DEPT_DASHBOARD_ICEBERG;
+
+-- Iceberg-specific properties (catalog, storage, format version)
+SHOW ICEBERG TABLES LIKE 'DEPT_DASHBOARD_ICEBERG' IN SCHEMA BUH_HOL.DATAMARTS;
 
 -- ============================================================
 -- PART D: OneLake integration (reference - not hands-on)
 -- ============================================================
 
--- To write Iceberg to OneLake for Direct Lake:
+-- To make Iceberg data readable by Power BI via Direct Lake, you write
+-- to an external volume pointing at OneLake instead of Snowflake-managed storage.
+--
+-- NOTE: The Snowflake-to-OneLake integration is evolving. The exact
+-- external volume syntax and authentication setup may differ from what's
+-- shown here. Check the latest Snowflake docs before implementing.
 --
 -- CREATE EXTERNAL VOLUME onelake_vol
 -- STORAGE_LOCATIONS = (
@@ -96,18 +121,24 @@ DESCRIBE TABLE BUH_HOL.DATAMARTS.DEPT_DASHBOARD_ICEBERG;
 -- PART E: When to use which table type
 -- ============================================================
 
--- RAW/INBOUND  -> Snowflake default (fast ingest, time travel, streams)
--- CORE_DATA      -> Snowflake default (dynamic tables, joins, transforms)
--- DATAMARTS      -> Iceberg in OneLake (open format, Direct Lake, no SF compute)
+-- RAW/INBOUND  -> Snowflake native (fast ingest, time travel, streams, cloning)
+--                 Why not Iceberg? Full feature set needed for ingest layer.
+-- CORE_DATA    -> Snowflake native (dynamic tables, joins, transforms)
+--                 Why not Iceberg? Dynamic tables don't target Iceberg today.
+-- DATAMARTS    -> Iceberg on external storage / OneLake
+--                 Why Iceberg? Open format, Direct Lake reads, no SF compute for BI.
+--                 Trade-off: More setup, some feature limitations.
 
 -- ============================================================
 -- CHECKPOINT
 -- ============================================================
 
+-- Verify the Iceberg table exists and has data:
+SELECT COUNT(*) AS ROW_COUNT FROM BUH_HOL.DATAMARTS.DEPT_DASHBOARD_ICEBERG;
+SHOW ICEBERG TABLES LIKE 'DEPT_DASHBOARD_ICEBERG' IN SCHEMA BUH_HOL.DATAMARTS;
+
 -- You should understand:
 --   1. Three PBI options and when to use each
 --   2. Why Fabric CU overconsumption happens
---   3. How Iceberg tables work (same SQL, open Parquet format)
---   4. The recommended hybrid pattern for BUH
-
-SELECT * FROM BUH_HOL.DATAMARTS.DEPT_DASHBOARD_ICEBERG ORDER BY TOTAL_CHARGES DESC;
+--   3. Snowflake-managed Iceberg vs external-volume Iceberg
+--   4. The recommended hybrid pattern: SF pipeline + Iceberg datamarts + Fabric BI
