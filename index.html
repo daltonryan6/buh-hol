@@ -109,7 +109,7 @@
         <div class="deck-ann deck-ann-right row-3">
           <div class="deck-annotation">
             <div class="dann-title">Open Formats</div>
-            <div class="dann-desc">Iceberg tables store data in open Parquet. Power BI, Spark, and Trino read natively &mdash; no Snowflake compute.</div>
+            <div class="dann-desc">Iceberg tables store data in open Parquet. When stored on external volumes, Power BI, Spark, and Trino read natively &mdash; no Snowflake compute.</div>
           </div>
         </div>
         <div class="deck-ann deck-ann-left row-4">
@@ -168,7 +168,7 @@
           <div class="vc-bg-icon">&#x1F512;</div>
           <div style="font-size:28px;margin-bottom:8px;">&#x1F512;</div>
           <div style="font-size:14px;font-weight:700;margin-bottom:6px;">Governance Built In</div>
-          <div style="font-size:12px;opacity:0.75;line-height:1.5;">Tag PII columns once, attach masking to the tag. Every role &mdash; admin, clinician, analyst &mdash; sees exactly what they should. No per-column policies.</div>
+          <div style="font-size:12px;opacity:0.75;line-height:1.5;">Tag PII columns once, attach masking to the tag. Every role &mdash; admin, clinician, analyst &mdash; sees exactly what they should. Minimal per-column work.</div>
         </div>
         <div class="value-card">
           <div class="vc-bg-icon">&#x1F4CA;</div>
@@ -242,13 +242,13 @@
           <div class="fc-icon">⚡</div>
           <div class="fc-num fc-num-2">Step 2</div>
           <div class="fc-title">Dynamic Tables</div>
-          <div class="fc-time">35 min</div>
+          <div class="fc-time">30 min</div>
         </div>
         <div class="flow-card" data-step="3">
           <div class="fc-icon">🔧</div>
           <div class="fc-num fc-num-3">Step 3</div>
           <div class="fc-title">Platform Features</div>
-          <div class="fc-time">20 min</div>
+          <div class="fc-time">25 min</div>
         </div>
         <div class="flow-card" data-step="4">
           <div class="fc-icon">🏷️</div>
@@ -287,11 +287,11 @@
         </div>
         <div class="nav-item" data-step="2">
           <div class="nav-num fc-num-2">2</div>
-          <div><div class="nav-title">Dynamic Tables</div><div class="nav-time">35 min</div></div>
+          <div><div class="nav-title">Dynamic Tables</div><div class="nav-time">30 min</div></div>
         </div>
         <div class="nav-item" data-step="3">
           <div class="nav-num fc-num-3">3</div>
-          <div><div class="nav-title">Platform Features</div><div class="nav-time">20 min</div></div>
+          <div><div class="nav-title">Platform Features</div><div class="nav-time">25 min</div></div>
         </div>
         <div class="nav-item" data-step="4">
           <div class="nav-num fc-num-4">4</div>
@@ -372,7 +372,7 @@ SHOW INTEGRATIONS LIKE 'github_buh_lab'.</pre>
           </ol>
           <p><img alt="Workspace setup" src="assets/img/workspace-setup.png"></p>
           <div class="callout callout-info">
-            <strong>Why this matters:</strong> Your Snowflake account now has a live connection to GitHub. You can pull the latest changes, browse files, and run SQL &ndash; all directly from Snowsight without switching tools.
+            <strong>Why this matters:</strong> Your Snowflake account now has a live connection to GitHub. You can pull the latest changes, browse files, and run SQL &ndash; all directly from Snowsight without switching tools. (In Snowflake docs, this feature is called &ldquo;Git Repository integration.&rdquo;)
           </div>
           <blockquote>
             <strong>Note:</strong> Do not modify the SQL script &mdash; in the next step, we'll ask Cortex Code to run it for us exactly as-is.
@@ -453,7 +453,7 @@ SHOW INTEGRATIONS LIKE 'github_buh_lab'.</pre>
         <section class="step" id="step-2">
           <h2>Dynamic Tables (Hands-On)</h2>
           <div class="step-meta">
-            <span class="badge badge-time">0:20 &ndash; 0:55</span>
+            <span class="badge badge-time">0:20 &ndash; 0:50</span>
             <span class="badge badge-script">02_dynamic_tables.sql</span>
           </div>
 
@@ -519,7 +519,7 @@ table and show me a few sample rows from each.</pre>
             <strong>Key design decision:</strong> <code>TARGET_LAG</code> controls <em>freshness</em> (how stale can it be?). <code>REFRESH_MODE</code> controls <em>how</em> the data is refreshed (incremental change processing, full rebuild, or adaptive). In production, set both explicitly &mdash; don't rely on defaults.
           </div>
           <div class="callout callout-info">
-            <strong>REFRESH_MODE best practices:</strong> Use <strong>ADAPTIVE</strong> as the recommended default for all incrementalizable workloads &mdash; it uses incremental refresh by default but auto-reinitializes when bulk loads land. Use <strong>INCREMENTAL</strong> when you want to guarantee no reinitialization and you control upstream load patterns. Use <strong>FULL</strong> for heavy aggregations where a predictable full rebuild is simpler than tracking changes. Avoid non-deterministic functions like <code>CURRENT_DATE()</code> in dynamic table definitions &mdash; they prevent incremental refresh. Always set <code>REFRESH_MODE</code> explicitly; don't rely on <code>AUTO</code> in production.
+            <strong>REFRESH_MODE best practices:</strong> <strong>ADAPTIVE</strong> is generally recommended for most workloads &mdash; it defaults to incremental refresh but auto-reinitializes when needed (e.g., bulk reloads). Use <strong>INCREMENTAL</strong> when you want to guarantee no reinitialization and you control upstream load patterns. Use <strong>FULL</strong> for heavy aggregations where a predictable full rebuild is simpler than tracking changes. Avoid non-deterministic functions like <code>CURRENT_DATE()</code> in dynamic table definitions &mdash; they prevent incremental refresh. Always set <code>REFRESH_MODE</code> explicitly; don't rely on <code>AUTO</code> in production.
           </div>
 
           <div class="checkpoint">
@@ -595,7 +595,7 @@ ORDER BY REFRESH_START_TIME DESC LIMIT 15;</pre>
         <section class="step" id="step-3">
           <h2>Platform Features</h2>
           <div class="step-meta">
-            <span class="badge badge-time">0:55 &ndash; 1:15</span>
+            <span class="badge badge-time">0:50 &ndash; 1:15</span>
             <span class="badge badge-script">03_platform_features.sql</span>
           </div>
 
@@ -625,7 +625,7 @@ Show me the SHOW RESOURCE MONITORS output.</pre>
           </div>
 
           <h3>3.3 Query Caching</h3>
-          <p>Snowflake has three cache layers: <strong>Result cache</strong> (24h, free, no warehouse needed), <strong>local disk cache</strong> (warehouse SSD), and <strong>remote disk cache</strong> (shared storage). This is especially important for Power BI &mdash; when 50 users open the same dashboard, only the first query runs.</p>
+          <p>Snowflake has two main cache layers: <strong>Result cache</strong> (24h, free, no warehouse needed) and <strong>warehouse local disk cache</strong> (SSD). A third remote storage layer operates transparently. This is especially important for Power BI &mdash; when 50 users open the same dashboard, only the first query runs.</p>
           <div class="code-block">
             <div class="code-header"><span>CoCo Prompt &ndash; Query caching</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
             <pre>Run Part C of scripts/03_platform_features.sql. It runs the same
@@ -644,17 +644,17 @@ Show me the query history comparison.</pre>
 1. Creates a table with FHIR-style JSON (vitals, allergies, medications)
    and queries it with dot notation and LATERAL FLATTEN.
 
-2. Reads a discharge summary PDF directly from the Git workspace using
-   SNOWFLAKE.CORTEX.PARSE_DOCUMENT — no external OCR tools needed.
+2. Reads a discharge summary PDF using AI_PARSE_DOCUMENT — no
+   external OCR tools needed.
 
 3. Asks questions against the extracted PDF text using
-   SNOWFLAKE.CORTEX.EXTRACT_ANSWER ("What medications was the patient
-   discharged on?" and "What is the follow-up plan?").
+   EXTRACT_ANSWER ("What medications was the patient discharged on?"
+   and "What is the follow-up plan?").
 
 Run all sections and show me the results.</pre>
           </div>
           <div class="callout callout-info">
-            <strong>What this shows:</strong> VARIANT columns store JSON natively &mdash; query nested fields with <code>:</code> dot notation, explode arrays with <code>LATERAL FLATTEN</code>. For unstructured documents, <code>AI_PARSE_DOCUMENT</code> extracts text from PDFs and images on any stage, and <code>EXTRACT_ANSWER</code> lets you ask natural-language questions against that text. No external services, no data movement.
+            <strong>What this shows:</strong> VARIANT columns store JSON natively &mdash; query nested fields with <code>:</code> dot notation, explode arrays with <code>LATERAL FLATTEN</code>. For unstructured documents, <code>AI_PARSE_DOCUMENT</code> extracts text from PDFs and images stored on any Snowflake stage, and <code>EXTRACT_ANSWER</code> lets you ask natural-language questions against that text. No external services, no data movement.
           </div>
 
           <h3>3.5 Custom Python UDFs</h3>
@@ -679,13 +679,13 @@ Show me the top 20 results with their acuity classifications.</pre>
    by clinical urgency (life-threatening, urgent, non-urgent) —
    no training step needed, just pass the text and the labels.
 
-2. Uses SNOWFLAKE.CORTEX.COMPLETE (an LLM) to generate plain-English
+2. Uses AI_COMPLETE (an LLM) to generate plain-English
    visit summaries for ED encounters.
 
 Run both sections and show me the results.</pre>
           </div>
           <div class="callout callout-info">
-            <strong>What this unlocks:</strong> <code>AI_CLASSIFY</code> categorized diagnoses into urgency levels with zero training &mdash; just SQL. <code>COMPLETE</code> generated plain-English summaries from structured data. Other Cortex functions include <code>AI_EXTRACT</code>, <code>AI_FILTER</code>, <code>AI_COMPLETE</code>, and <code>AI_PARSE_DOCUMENT</code>.
+            <strong>What this unlocks:</strong> <code>AI_CLASSIFY</code> categorized diagnoses into urgency levels with zero training &mdash; just SQL. <code>AI_COMPLETE</code> generated plain-English summaries from structured data. Other Cortex AI functions include <code>AI_SENTIMENT</code>, <code>AI_SUMMARIZE</code>, <code>AI_TRANSLATE</code>, <code>AI_EXTRACT_ANSWER</code>, and <code>AI_PARSE_DOCUMENT</code>. See the <a href="https://docs.snowflake.com/en/guides-overview-ai-features" target="_blank">Cortex AI docs</a> for the full list.
           </div>
 
           <h3>Beyond Cortex AI: Snowflake ML Functions</h3>
@@ -881,7 +881,7 @@ USE SECONDARY ROLES ALL;</pre>
           </div>
 
           <h3>5.3 Create an Iceberg table via CoCo</h3>
-          <p>Iceberg tables use the same SQL but store data in open Parquet format. Any Iceberg-compatible engine (Fabric, Spark, Trino) can read it. In this lab we create a <strong>Snowflake-managed</strong> Iceberg table (data stays in Snowflake storage). Copy and paste this prompt into Cortex Code:</p>
+          <p>Iceberg tables use the same SQL but store data in open Parquet format. In this lab we create a <strong>Snowflake-managed</strong> Iceberg table &mdash; data stays in Snowflake storage. To make data readable by external engines like Fabric or Spark, you'd specify an <code>EXTERNAL_VOLUME</code> pointing to your own cloud storage (see Part D in the script). Copy and paste this prompt into Cortex Code:</p>
           <div class="code-block">
             <div class="code-header"><span>CoCo Prompt &ndash; Create Iceberg table</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
             <pre>Open the file scripts/05_powerbi_iceberg_fabric.sql from the buh-hol
@@ -889,8 +889,9 @@ Git workspace and run Part C. It creates a Snowflake-managed Iceberg
 table from our DATAMARTS.DEPARTMENT_DASHBOARD dynamic table.
 
 After execution, query the Iceberg table and show me the results
-sorted by TOTAL_CHARGES descending. Also run DESCRIBE TABLE on
-the Iceberg table so I can see its metadata.</pre>
+sorted by TOTAL_CHARGES descending. Also run SHOW ICEBERG TABLES
+LIKE 'DEPT_DASHBOARD_ICEBERG' IN SCHEMA BUH_HOL.DATAMARTS so I can
+see the Iceberg-specific properties (catalog, storage, format version).</pre>
           </div>
 
           <h3>5.4 When to use which table type</h3>
@@ -1025,8 +1026,23 @@ Confirm everything was cleaned up successfully.</pre>
           <div class="code-block">
             <div class="code-header"><span>SQL &ndash; 07_cleanup.sql</span><button class="copy-btn">📋 Copy</button></div>
             <pre>USE ROLE ACCOUNTADMIN;
+
+-- Unset tags from external objects before dropping the DB that defines them
 ALTER WAREHOUSE BUH_ANALYTICS_WH UNSET TAG BUH_HOL.GOVERNANCE.COST_CENTER;
+ALTER WAREHOUSE BUH_PIPELINE_WH UNSET TAG BUH_HOL.GOVERNANCE.COST_CENTER;
+ALTER DATABASE BUH_HOL UNSET TAG BUH_HOL.GOVERNANCE.SENSITIVITY;
+
+-- Unset resource monitor and suspend task
+ALTER WAREHOUSE BUH_ANALYTICS_WH SET RESOURCE_MONITOR = NULL;
+ALTER TASK IF EXISTS BUH_HOL.INBOUND.LOG_PATIENT_CHANGES SUSPEND;
+
+-- Drop database (cascades all internal objects)
 DROP DATABASE IF EXISTS BUH_HOL;
+
+-- Drop account-level objects
+DROP RESOURCE MONITOR IF EXISTS BUH_LAB_MONITOR;
+DROP WAREHOUSE IF EXISTS BUH_PIPELINE_WH;
+DROP WAREHOUSE IF EXISTS BUH_ANALYTICS_WH;
 DROP ROLE IF EXISTS BUH_LAB_ADMIN;
 DROP ROLE IF EXISTS BUH_LAB_ANALYST;
 DROP ROLE IF EXISTS BUH_LAB_CLINICIAN;
