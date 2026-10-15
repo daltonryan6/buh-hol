@@ -4,6 +4,7 @@
 
   GOAL: Verify the end-to-end pipeline and discuss next steps.
   TIME: ~15 minutes
+  PREREQUISITE: Run scripts 01 through 05 in order
 =============================================================================*/
 
 USE DATABASE BUH_HOL;
@@ -31,17 +32,22 @@ USE ROLE ACCOUNTADMIN;
 --        +--> Snowflake default tables (analytics, AI, sharing)
 --        +--> Iceberg tables in OneLake (Power BI Direct Lake)
 --
--- GOVERNANCE layer (tags + masking policies) applies across ALL layers
--- Git Workspace provides versioned SQL delivery
+-- GOVERNANCE layer (tags + masking policies + row access policies) applies across ALL layers
+-- Git Integration provides versioned SQL delivery (connected to GitHub)
 
 -- ============================================================
 -- End-to-end verification
 -- ============================================================
 
 -- Row counts across all layers
-SELECT 'INBOUND.PATIENT' AS LAYER, COUNT(*) AS ROWS FROM BUH_HOL.INBOUND.PATIENT
+-- You should see rows at every layer. If any count is 0,
+-- that layer's dynamic table may still be refreshing — wait
+-- a moment and re-run.
+SELECT 'INBOUND.PATIENT' AS LAYER, COUNT(*) AS ROW_COUNT FROM BUH_HOL.INBOUND.PATIENT
 UNION ALL SELECT 'INBOUND.PAT_ENC', COUNT(*) FROM BUH_HOL.INBOUND.PAT_ENC
 UNION ALL SELECT 'INBOUND.ORDER_PROC', COUNT(*) FROM BUH_HOL.INBOUND.ORDER_PROC
+UNION ALL SELECT 'INBOUND.STRATA_BUDGET', COUNT(*) FROM BUH_HOL.INBOUND.STRATA_BUDGET
+UNION ALL SELECT 'INBOUND.WORKDAY_PURCHASES', COUNT(*) FROM BUH_HOL.INBOUND.WORKDAY_PURCHASES
 UNION ALL SELECT 'CORE_DATA.DIM_PATIENT', COUNT(*) FROM BUH_HOL.CORE_DATA.DIM_PATIENT
 UNION ALL SELECT 'CORE_DATA.FACT_ENCOUNTER', COUNT(*) FROM BUH_HOL.CORE_DATA.FACT_ENCOUNTER
 UNION ALL SELECT 'CORE_DATA.FACT_ORDER', COUNT(*) FROM BUH_HOL.CORE_DATA.FACT_ORDER
@@ -50,14 +56,8 @@ UNION ALL SELECT 'DATAMARTS.ED_THROUGHPUT', COUNT(*) FROM BUH_HOL.DATAMARTS.ED_T
 UNION ALL SELECT 'DATAMARTS.READMISSION_RISK', COUNT(*) FROM BUH_HOL.DATAMARTS.READMISSION_RISK
 ORDER BY LAYER;
 
--- Dynamic table pipeline status
-SELECT
-    NAME,
-    TARGET_LAG,
-    SCHEDULING_STATE
-FROM TABLE(INFORMATION_SCHEMA.DYNAMIC_TABLE_GRAPH_HISTORY())
-WHERE DATABASE_NAME = 'BUH_HOL'
-ORDER BY NAME;
+-- Quick view of all dynamic tables and their status
+SHOW DYNAMIC TABLES IN DATABASE BUH_HOL;
 
 -- ============================================================
 -- Next steps for your environment
@@ -68,19 +68,33 @@ ORDER BY NAME;
 --
 -- 2. DYNAMIC TABLES: Replace scheduled transformation jobs with declarative SQL.
 --    Start with one pipeline (e.g., a department dashboard) and set TARGET_LAG
---    based on business need. Dynamic tables typically use similar credits to
---    equivalent ETL but eliminate orchestration and error-handling overhead.
+--    based on business need. Dynamic tables eliminate orchestration and
+--    error-handling overhead. Credit usage depends on the workload: incremental
+--    refreshes of append-heavy pipelines can be very efficient, while complex
+--    joins may use comparable credits to equivalent scheduled ETL.
 --
 -- 3. ICEBERG + ONELAKE: Set up an external volume pointing to OneLake.
 --    Write only DATAMARTS tables as Iceberg. Connect Power BI via Direct Lake.
 --    Size Fabric capacity for BI read load only.
 --
 -- 4. TAGS + MASKING: Define your PII taxonomy (SSN, MRN, Name, DOB, etc.).
---    Run SYSTEM$CLASSIFY to auto-detect PII across Clarity tables. Attach
---    masking policies to tags so new columns are automatically protected.
+--    Use Snowflake's classification features to auto-detect sensitive data:
+--      - SYSTEM$CLASSIFY() for broad semantic classification
+--      - Data Classification in Snowsight for PII/PHI auto-detection
+--    Attach masking policies to tags so new columns are automatically protected.
+--    Review auto-classifications before applying them in production.
 --
 -- 5. COST MANAGEMENT: Tag warehouses for chargeback by department.
 --    Right-size Fabric capacity for BI reads, keep pipeline in Snowflake.
 --
 -- 6. DEV/TEST/PROD: Use zero-copy cloning for daily prod-to-test refresh.
---    Dynamic tables in the clone auto-refresh against the cloned data.
+--    Dynamic tables in the clone auto-refresh against the cloned data,
+--    because their FROM clauses resolve within the cloned database.
+--
+--    CAVEATS:
+--    - Cloned dynamic tables refresh independently and consume their own
+--      compute credits. Suspend them if the test env doesn't need live refresh.
+--    - If a dynamic table references a source in a DIFFERENT database,
+--      the clone still points to the original source (not a clone of it).
+--    - Clone is a point-in-time snapshot; changes to prod after the clone
+--      are not reflected in the cloned environment.
