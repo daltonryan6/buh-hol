@@ -207,6 +207,11 @@ USE SECONDARY ROLES ALL;
 --
 -- Row access policies are supported on dynamic tables, standard tables, and views.
 
+-- Detach policy before replacing (required — Snowflake won't drop a policy
+-- that is attached to a table, even with CREATE OR REPLACE)
+ALTER TABLE BUH_HOL.CORE_DATA.FACT_ENCOUNTER
+  DROP ROW ACCESS POLICY IF EXISTS BUH_HOL.GOVERNANCE.DEPARTMENT_ACCESS;
+
 CREATE OR REPLACE ROW ACCESS POLICY BUH_HOL.GOVERNANCE.DEPARTMENT_ACCESS
   AS (department_name VARCHAR) RETURNS BOOLEAN ->
   CASE
