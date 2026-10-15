@@ -866,6 +866,10 @@ see the Iceberg-specific properties (catalog, storage, format version).</pre>
             <div class="code-header"><span>CoCo Prompt &ndash; Interactive Streamlit dashboard</span><button class="copy-btn">&#x1F4CB; Copy</button></div>
             <pre>Create a Streamlit in Snowflake app called BUH_HOL.DATAMARTS.BUH_CLINICAL_DASHBOARD.
 
+IMPORTANT: This runs inside Snowflake, so use
+snowflake.snowpark.context.get_active_session() to get the session —
+do NOT use st.connection("snowflake"). Use session.sql() to query data.
+
 It should primarily query DEPARTMENT_DASHBOARD (which has encounter data
 from Clarity, budget data from Strata, and purchasing data from Workday).
 
